@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+.env*.local
+.env
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+service-account*.json
+*.log
+dev-log.txt

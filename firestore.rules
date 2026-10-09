@@ -1,0 +1,8 @@
+rules_version = '2';
+service cloud.firestore {
+  match /{document=**} {
+    // All data access goes through firebase-admin in Next.js API routes.
+    // The browser only uses Firebase Auth for login — never Firestore.
+    allow read, write: if false;
+  }
+}
