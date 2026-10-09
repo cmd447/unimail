@@ -12,8 +12,10 @@
  * The first breaks webpack/enhanced-resolve and Next's build tracing; the
  * second breaks `mkdir .next/types`. This preload normalizes both.
  *
- * Local-only workaround — Vercel builds on Linux and never sees this.
+ * Windows + exFAT only — anywhere else this file does nothing.
  */
+if (process.platform !== "win32") return;
+
 const fs = require("fs");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -171,6 +173,8 @@ for (const name of RETRY_OPS) {
 }
 
 // Sync fs.*Sync
+// realpathSync.native is its own api — the wrapper would orphan it
+const realpathNative = fs.realpathSync.native;
 for (const name of RETRY_OPS) {
   const orig = fs[name + "Sync"];
   if (typeof orig !== "function") continue;
@@ -185,6 +189,7 @@ for (const name of RETRY_OPS) {
     }
   };
 }
+if (realpathNative) fs.realpathSync.native = realpathNative;
 
 // Promise-style fs.promises.*
 for (const name of RETRY_OPS) {
