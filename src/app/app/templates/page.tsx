@@ -6,7 +6,7 @@ import { Area, Btn, Card, Err, Inp, PageHead } from "@/components/web/ui";
 import { SpamRadar } from "@/components/web/spamradar";
 import { htmlToText } from "@/lib/render";
 
-export default function Templates() {
+export default function Letters() {
   const { data, reload } = useFetch<{ templates: any[] }>("/api/templates");
   const [sel, setSel] = useState<any | null>(null); // {id?} editing, null = closed
   const [form, setForm] = useState({ name: "", subject: "", html: "", text: "" });
@@ -37,8 +37,8 @@ export default function Templates() {
 
   return (
     <div>
-      <PageHead title="Templates" sub="reusable emails — personalized for each recipient">
-        <Btn variant="primary" onClick={() => open()}>+ new template</Btn>
+      <PageHead title="Letters" sub="reusable emails — {{first_name}} and friends personalize per contact">
+        <Btn variant="primary" onClick={() => open()}>+ write a letter</Btn>
       </PageHead>
       <Err msg={msg} />
 
@@ -59,7 +59,7 @@ export default function Templates() {
             </button>
           ))}
           {!data?.templates?.length && (
-            <p className="px-1 py-4 text-sm text-zinc-600">no templates — create one</p>
+            <p className="px-1 py-4 text-sm text-zinc-600">no letters — write one</p>
           )}
         </div>
 
@@ -67,7 +67,7 @@ export default function Templates() {
           <Card>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-medium text-zinc-300">
-                {sel.id ? `editing: ${sel.name}` : "new template"}
+                {sel.id ? `editing: ${sel.name}` : "new letter"}
               </h2>
               <div className="flex gap-1.5">
                 <Btn onClick={() => setPreview(!preview)}>
@@ -89,7 +89,7 @@ export default function Templates() {
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Inp label="template name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <Inp label="letter name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               <Inp label="subject line" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
             </div>
             <div className="mt-3">
@@ -100,7 +100,7 @@ export default function Templates() {
                 />
               ) : (
                 <Area
-                  label="the template (html)"
+                  label="the letter (html)"
                   rows={14}
                   spellCheck={false}
                   value={form.html}

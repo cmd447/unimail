@@ -103,7 +103,7 @@ export default function CampaignDetail() {
     <div>
       <PageHead title={c.name} sub={`${c.listName} · ${c.subject}`}>
         <Link href="/app/campaigns" className="self-center text-sm text-zinc-500 hover:text-zinc-300">
-          ← campaigns
+          ← all sends
         </Link>
         <Btn onClick={() => { reload(); loadMsgs(); reloadLogs(); reloadQueued(); }}>refresh</Btn>
         <Btn onClick={probe}>[ test placement ]</Btn>
@@ -114,7 +114,7 @@ export default function CampaignDetail() {
         {c.status === "sending" && <Btn onClick={() => act("pause")}>pause</Btn>}
         {c.status === "paused" && <Btn variant="primary" onClick={() => act("resume")}>resume</Btn>}
         {!["completed", "cancelled"].includes(c.status) && (
-          <Btn variant="danger" onClick={() => confirm("call this campaign off?") && act("cancel")}>
+          <Btn variant="danger" onClick={() => confirm("call this blast off?") && act("cancel")}>
             cancel
           </Btn>
         )}
@@ -202,7 +202,7 @@ export default function CampaignDetail() {
         {!msgs.length && (
           <tr>
             <td colSpan={5} className="px-3 py-6 text-center text-zinc-600">
-              no contacts in this campaign
+              no contacts in this blast
             </td>
           </tr>
         )}

@@ -7,8 +7,8 @@ import { Badge, Card, PageHead, statusColor } from "@/components/web/ui";
 export default function Overview() {
   const profiles = useFetch<{ profiles: any[] }>("/api/profiles");
   const lists = useFetch<{ lists: any[] }>("/api/lists");
-  const templates = useFetch<{ templates: any[] }>("/api/templates");
-  const campaigns = useFetch<{ campaigns: any[] }>("/api/campaigns");
+  const letters = useFetch<{ templates: any[] }>("/api/templates");
+  const blast = useFetch<{ campaigns: any[] }>("/api/campaigns");
   const events = useFetch<{ events: any[] }>("/api/events?limit=8");
   const settings = useFetch<{ settings: any }>("/api/settings");
 
@@ -32,16 +32,16 @@ export default function Overview() {
     },
     {
       n: "3",
-      label: "write a template",
+      label: "write a letter",
       why: "one email — {{first_name}} personalizes it per contact",
-      done: (templates.data?.templates.length ?? 0) > 0,
+      done: (letters.data?.templates.length ?? 0) > 0,
       href: "/app/templates",
     },
     {
       n: "4",
-      label: "send a campaign",
+      label: "send a blast",
       why: "pick the three above, hit send",
-      done: (campaigns.data?.campaigns.length ?? 0) > 0,
+      done: (blast.data?.campaigns.length ?? 0) > 0,
       href: "/app/campaigns/new",
     },
   ];
@@ -149,12 +149,12 @@ export default function Overview() {
         </Card>
       </div>
 
-      {campaigns.data?.campaigns?.filter((c) =>
+      {blast.data?.campaigns?.filter((c) =>
         ["sending", "paused", "scheduled"].includes(c.status),
       ).length ? (
         <Card className="mt-4">
           <h2 className="mb-3 text-sm font-medium text-zinc-300">in progress</h2>
-          {campaigns.data.campaigns
+          {blast.data.campaigns
             .filter((c) => ["sending", "paused", "scheduled"].includes(c.status))
             .map((c) => (
               <Link

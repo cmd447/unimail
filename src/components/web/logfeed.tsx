@@ -32,7 +32,7 @@ export function LogDetail({
 }) {
   const [msg, setMsg] = useState<any | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [view, setView] = useState<"template" | "plain" | "raw">("template");
+  const [view, setView] = useState<"letter" | "plain" | "raw">("letter");
   const [fetched, setFetched] = useState(false);
 
   const mid = event?.meta?.messageId;
@@ -64,7 +64,7 @@ export function LogDetail({
 
         <h3 className="mb-1 text-xs uppercase text-zinc-500">delivery receipt</h3>
         <div className="mb-4 border border-zinc-800 px-2">
-          <ROW k="campaign" v={event.campaignName} />
+          <ROW k="blast" v={event.campaignName} />
           <ROW k="detail" v={event.detail} />
           {Object.entries(event.meta ?? {}).map(([k, v]) => (
             <ROW key={k} k={k} v={v} />
@@ -88,24 +88,24 @@ export function LogDetail({
           </p>
         )}
         {mid && !msg && !err && (
-          <p className="text-xs text-zinc-600">loading template…</p>
+          <p className="text-xs text-zinc-600">loading letter…</p>
         )}
 
         {r && (
           <>
             <div className="mb-2 flex items-center gap-2">
               <h3 className="text-xs uppercase text-zinc-500">the email as sent</h3>
-              <Btn onClick={() => setView("template")}>{view === "template" ? "• html •" : "html"}</Btn>
+              <Btn onClick={() => setView("letter")}>{view === "letter" ? "• html •" : "html"}</Btn>
               <Btn onClick={() => setView("plain")}>{view === "plain" ? "• plain •" : "plain"}</Btn>
               <Btn onClick={() => setView("raw")}>{view === "raw" ? "• raw •" : "raw"}</Btn>
             </div>
             <p className="mb-2 text-xs text-zinc-400">subject: {r.subject}</p>
-            {view === "template" && (
+            {view === "letter" && (
               <iframe
                 sandbox=""
                 srcDoc={r.html}
                 className="h-[420px] w-full border border-zinc-800 bg-white"
-                title="template"
+                title="letter"
               />
             )}
             {view === "plain" && (
@@ -122,7 +122,7 @@ export function LogDetail({
         )}
         {msg && !r && (
           <p className="text-xs text-zinc-600">
-            template wasn't stored for this one (skipped/queued or sent before template tracking).
+            letter wasn't stored for this one (skipped/queued or sent before letter tracking).
           </p>
         )}
       </Card>

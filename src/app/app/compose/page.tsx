@@ -63,7 +63,7 @@ export default function Compose() {
             if (t) setDraft({ subject: t.subject, html: t.html, text: t.text });
           }}
         >
-          <option value="">load template…</option>
+          <option value="">load letter…</option>
           {tData?.templates.map((t: any) => (
             <option key={t.id} value={t.id}>
               {t.name}
@@ -177,12 +177,12 @@ export default function Compose() {
 
           <Card>
             <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
-              save as template
+              save as letter
             </h3>
             <div className="flex gap-2">
               <input
                 id="tpl-name"
-                placeholder="template name"
+                placeholder="letter name"
                 className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
               />
               <Btn
@@ -193,7 +193,7 @@ export default function Compose() {
                     method: "POST",
                     body: JSON.stringify({ name, ...draft, text: draft.text || htmlToText(draft.html) }),
                   });
-                  setMsg(`saved template '${name}'`);
+                  setMsg(`saved letter '${name}'`);
                 }}
               >
                 save

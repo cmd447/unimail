@@ -30,7 +30,7 @@ export default function NewCampaign() {
   const router = useRouter();
   const profiles = useFetch<{ profiles: any[] }>("/api/profiles");
   const lists = useFetch<{ lists: any[] }>("/api/lists");
-  const templates = useFetch<{ templates: any[] }>("/api/templates");
+  const letters = useFetch<{ templates: any[] }>("/api/templates");
   const [form, setForm] = useState({
     name: "", profileId: "", listId: "", templateId: "",
     subject: "", rateLimit: "", replyTo: "", fromName: "", scheduledAt: "",
@@ -46,7 +46,7 @@ export default function NewCampaign() {
     profiles.data?.profiles.find((p) => p.isActive) ??
     profiles.data?.profiles.find((p) => p.isDefault);
   const list = lists.data?.lists.find((l) => l.id === form.listId);
-  const tpl = templates.data?.templates.find((t) => t.id === form.templateId);
+  const tpl = letters.data?.templates.find((t) => t.id === form.templateId);
 
   const pastedRows = leadSrc === "paste" ? parsePaste(paste) : [];
   const leadCount = leadSrc === "list" ? (list?.count ?? 0) : pastedRows.length;
@@ -84,7 +84,7 @@ export default function NewCampaign() {
         const d = await api("/api/lists", {
           method: "POST",
           body: JSON.stringify({
-            name: `${form.name || "campaign"} — pasted`,
+            name: `${form.name || "blast"} — pasted`,
             description: "ad-hoc paste list",
           }),
         });
@@ -116,16 +116,16 @@ export default function NewCampaign() {
 
   return (
     <div>
-      <PageHead title="New campaign" sub="sender → contacts → template → send">
+      <PageHead title="New blast" sub="sender → contacts → letter → send">
         <Link href="/app/campaigns" className="self-center text-sm text-zinc-500 hover:text-zinc-300">
-          ← campaigns
+          ← all sends
         </Link>
       </PageHead>
       <Err msg={msg} />
 
       <Card className="mb-4">
         <Inp
-          label="campaign name"
+          label="blast name"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           placeholder="e.g. october push — cold list"
@@ -198,24 +198,24 @@ export default function NewCampaign() {
                 className="w-full border border-zinc-800 bg-black px-3 py-2 font-mono text-xs text-zinc-300 placeholder:text-zinc-700 focus:border-zinc-500 focus:outline-none"
               />
               <p className="mt-1 text-[11px] text-zinc-600">
-                {pastedRows.length} contacts parsed — saves as list '{form.name || "campaign"} — pasted'
+                {pastedRows.length} contacts parsed — saves as list '{form.name || "blast"} — pasted'
               </p>
             </>
           )}
         </Card>
 
-        {/* 03 — template */}
+        {/* 03 — letter */}
         <Card>
           <h3 className="mb-2 border-b border-zinc-800 pb-1 text-xs uppercase tracking-wider text-zinc-500">
-            03 · template
+            03 · letter
           </h3>
           <Sel
-            label="template"
+            label="letter"
             value={form.templateId}
             onChange={(e) => setForm({ ...form, templateId: e.target.value })}
           >
             <option value="">— pick —</option>
-            {templates.data?.templates.map((t) => (
+            {letters.data?.templates.map((t) => (
               <option key={t.id} value={t.id}>{t.name}</option>
             ))}
           </Sel>
@@ -223,7 +223,7 @@ export default function NewCampaign() {
             <>
               <Inp
                 className="mt-2"
-                label="subject override (blank = template's own)"
+                label="subject override (blank = letter's own)"
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
                 placeholder={tpl.subject}
@@ -252,7 +252,7 @@ export default function NewCampaign() {
                     </div>
                   ))}
                   {report.issues.length > 5 && (
-                    <div className="text-zinc-600">+{report.issues.length - 5} more — open the template to fix them</div>
+                    <div className="text-zinc-600">+{report.issues.length - 5} more — open the letter to fix them</div>
                   )}
                 </div>
               )}
@@ -331,7 +331,7 @@ export default function NewCampaign() {
           )}
           {!ready && (
             <span className="self-center text-[11px] text-zinc-600">
-              needs: name{!sender && " + sender"}{!form.templateId && " + template"}{!leadCount && " + contacts"}
+              needs: name{!sender && " + sender"}{!form.templateId && " + letter"}{!leadCount && " + contacts"}
             </span>
           )}
         </div>

@@ -36,7 +36,7 @@ export default function Settings() {
           <div>
             <h2 className="text-sm font-medium text-zinc-300">Kill switch</h2>
             <p className="text-xs text-zinc-500">
-              freezes every live campaign at the next batch
+              freezes every live blast at the next batch
             </p>
           </div>
           <Btn
@@ -50,7 +50,7 @@ export default function Settings() {
               )
             }
           >
-            {s?.killSwitch ? "ON — campaigns frozen" : "off"}
+            {s?.killSwitch ? "ON — blast frozen" : "off"}
           </Btn>
         </div>
       </Card>
@@ -86,7 +86,7 @@ export default function Settings() {
       <Card className="mb-4">
         <h2 className="text-sm font-medium text-zinc-300">Seed inbox — spam detection</h2>
         <p className="mb-3 text-xs text-zinc-500">
-          a mailbox you own (a gmail works). every campaign sends one copy here,
+          a mailbox you own (a gmail works). every blast sends one copy here,
           then cron checks whether it sent in inbox or spam.
           {s?.seedEmail && (
             <>

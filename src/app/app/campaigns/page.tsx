@@ -4,7 +4,7 @@ import Link from "next/link";
 import { api, useFetch } from "@/components/web/api";
 import { Badge, Btn, PageHead, Tbl, statusColor } from "@/components/web/ui";
 
-export default function Campaigns() {
+export default function Blast() {
   const { data, reload } = useFetch<{ campaigns: any[] }>("/api/campaigns");
 
   const act = async (id: string, action: string) => {
@@ -14,14 +14,14 @@ export default function Campaigns() {
 
   return (
     <div>
-      <PageHead title="Campaigns" sub="every send — click one for the receipts">
+      <PageHead title="Blast" sub="every send — click one for the receipts">
         <Btn onClick={reload}>refresh</Btn>
         <Link href="/app/campaigns/new">
-          <Btn variant="primary">+ new send</Btn>
+          <Btn variant="primary">+ new blast</Btn>
         </Link>
       </PageHead>
 
-      <Tbl head={["Campaign", "List", "Status", "Sent", "Failed", ""]}>
+      <Tbl head={["Blast", "List", "Status", "Sent", "Failed", ""]}>
         {(data?.campaigns ?? []).map((c) => {
           const done = c.counters.sent + c.counters.failed + c.counters.skipped;
           const pct = Math.round((100 * done) / Math.max(1, c.counters.total));
@@ -82,7 +82,7 @@ export default function Campaigns() {
         {!data?.campaigns?.length && (
           <tr>
             <td colSpan={6} className="px-3 py-6 text-center text-zinc-600">
-              no campaigns — go create one
+              nothing sent yet — start a blast
             </td>
           </tr>
         )}
