@@ -80,8 +80,8 @@ export default function Profiles() {
               <option value="none">None (25)</option>
             </Sel>
             <Inp label="Port" inputMode="numeric" value={form.port} onChange={(e) => set("port", e.target.value)} />
-            <Inp label="login" inputMode="email" autoComplete="off" value={form.user} onChange={(e) => set("user", e.target.value)} />
-            <Inp label={editing.id ? "password (blank = keep)" : "app password"} type="password" autoComplete="new-password" value={form.password} onChange={(e) => set("password", e.target.value)} />
+            <Inp label="smtp username (usually your email)" inputMode="email" autoComplete="off" value={form.user} onChange={(e) => set("user", e.target.value)} placeholder="you@gmail.com" />
+            <Inp label={editing.id ? "password (blank = keep)" : "app password — gmail needs one, not your real password"} type="password" autoComplete="new-password" value={form.password} onChange={(e) => set("password", e.target.value)} />
             <Inp label="from name (what contacts see)" value={form.fromName} onChange={(e) => set("fromName", e.target.value)} />
             <Inp label="from email" type="email" inputMode="email" value={form.fromEmail} onChange={(e) => set("fromEmail", e.target.value)} />
             <Inp label="reply-to (optional)" type="email" inputMode="email" value={form.replyTo} onChange={(e) => set("replyTo", e.target.value)} />
