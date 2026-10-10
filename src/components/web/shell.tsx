@@ -9,8 +9,8 @@ const NAV = [
   ["Home", "/app"],
   ["SMTP", "/app/profiles"],
   ["Contacts", "/app/lists"],
-  ["Templates", "/app/templates"],
-  ["Campaigns", "/app/campaigns"],
+  ["Letters", "/app/templates"],
+  ["Blast", "/app/campaigns"],
   ["Compose", "/app/compose"],
   ["Settings", "/app/settings"],
 ] as const;

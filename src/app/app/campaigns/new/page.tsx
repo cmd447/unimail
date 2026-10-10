@@ -198,7 +198,7 @@ export default function NewCampaign() {
                 className="w-full border border-zinc-800 bg-black px-3 py-2 font-mono text-xs text-zinc-300 placeholder:text-zinc-700 focus:border-zinc-500 focus:outline-none"
               />
               <p className="mt-1 text-[11px] text-zinc-600">
-                {pastedRows.length} contacts parsed — saves as list '{form.name || "campaign"} — pasted'
+                {pastedRows.length} contacts parsed — saves as list '{form.name || "blast"} — pasted'
               </p>
             </>
           )}
