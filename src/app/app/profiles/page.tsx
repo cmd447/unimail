@@ -52,7 +52,7 @@ export default function Profiles() {
 
   return (
     <div>
-      <PageHead title="Senders" sub="the accounts emails go out through — add one and verify it">
+      <PageHead title="SMTP" sub="the accounts emails go out through — add one, hit verify">
         <Btn
           variant="primary"
           onClick={() => {

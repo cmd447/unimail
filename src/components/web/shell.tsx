@@ -7,10 +7,10 @@ import { api, useFetch } from "./api";
 
 const NAV = [
   ["Home", "/app"],
-  ["Senders", "/app/profiles"],
+  ["SMTP", "/app/profiles"],
   ["Contacts", "/app/lists"],
-  ["Letters", "/app/templates"],
-  ["Blast", "/app/campaigns"],
+  ["Templates", "/app/templates"],
+  ["Campaigns", "/app/campaigns"],
   ["Compose", "/app/compose"],
   ["Settings", "/app/settings"],
 ] as const;

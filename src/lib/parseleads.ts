@@ -7,22 +7,31 @@ export interface LeadRow {
   fields?: Record<string, string>;
 }
 
-// accept csv-ish lines: `email`, `email,first,last`, `email;first;last`, `email\tfirst\tlast`
-// skips header lines and anything without an @
+const HEADER_WORDS = /^(first_?name?|last_?name?|fname|lname|surname|email|e-?mail|name)$/i;
+
+// accepts pretty much anything: one email per line, `email, first, last`,
+// a raw comma/space-separated dump of addresses, or a mix.
+// lines with several emails → each becomes a contact; a single email on a
+// line soaks up the other tokens as its name. headers and junk get skipped.
 export function parsePaste(text: string): LeadRow[] {
   const rows: LeadRow[] = [];
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line || line.startsWith("#")) continue;
-    const parts = line.split(/[,;\t]/).map((p) => p.trim().replace(/^["']|["']$/g, ""));
-    const emailIdx = parts.findIndex((p) => EMAIL_RE.test(p));
-    if (emailIdx === -1) continue; // header or junk line
-    const rest = parts.filter((_, i) => i !== emailIdx).filter(Boolean);
-    const names = rest.filter(
-      (p) => !/^(first_?name?|last_?name?|fname|lname|surname|email|e-?mail|name)$/i.test(p),
-    );
+    const parts = line
+      .split(/[,;\t ]+/)
+      .map((p) => p.trim().replace(/^["']|["']$/g, ""))
+      .filter(Boolean);
+    const emails = parts.filter((p) => EMAIL_RE.test(p));
+    if (!emails.length) continue;
+    if (emails.length > 1) {
+      // address dump — every email is its own contact
+      for (const e of emails) rows.push({ email: e.toLowerCase(), fields: {} });
+      continue;
+    }
+    const names = parts.filter((p) => !EMAIL_RE.test(p) && !HEADER_WORDS.test(p));
     rows.push({
-      email: parts[emailIdx].toLowerCase(),
+      email: emails[0].toLowerCase(),
       firstName: names[0] ?? "",
       lastName: names.slice(1).join(" ") || "",
       fields: {},

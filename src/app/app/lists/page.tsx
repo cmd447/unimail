@@ -8,85 +8,59 @@ import { ImportLeads } from "@/components/web/importleads";
 
 export default function Lists() {
   const { data, reload } = useFetch<{ lists: any[] }>("/api/lists");
-  const [adding, setAdding] = useState(false);
-  const [importing, setImporting] = useState(false);
   const [packId, setPackId] = useState("");
   const [newPack, setNewPack] = useState("");
-  const [form, setForm] = useState({ name: "", description: "" });
   const [msg, setMsg] = useState<string | null>(null);
-
-  const create = async () => {
-    if (!form.name.trim()) return;
-    await api("/api/lists", { method: "POST", body: JSON.stringify(form) });
-    setAdding(false);
-    setForm({ name: "", description: "" });
-    reload();
-  };
 
   return (
     <div>
-      <PageHead title="Contacts" sub="import contacts into lists — paste or a csv">
-        <Btn onClick={() => { setImporting(!importing); setAdding(false); }}>[ import ]</Btn>
-        <Btn variant="primary" onClick={() => { setAdding(!adding); setImporting(false); }}>+ new list</Btn>
-      </PageHead>
+      <PageHead title="Contacts" sub="add emails to a list — that's it" />
       <Err msg={msg} />
 
-      {importing && (
-        <Card className="mb-4">
-          <h3 className="mb-3 text-sm font-medium text-zinc-300">import contacts</h3>
-          <div className="mb-3 grid gap-3 sm:grid-cols-[1fr_1fr]">
-            <Sel
-              label="into list"
-              value={packId}
-              onChange={(e) => { setPackId(e.target.value); if (e.target.value) setNewPack(""); }}
-            >
-              <option value="">— pick a list —</option>
-              {(data?.lists ?? []).map((l) => (
-                <option key={l.id} value={l.id}>{l.name} ({l.count})</option>
-              ))}
-            </Sel>
-            <Inp
-              label="or new list name"
-              value={newPack}
-              onChange={(e) => { setNewPack(e.target.value); if (e.target.value) setPackId(""); }}
-            />
-          </div>
-          {packId ? (
-            <ImportLeads listId={packId} onDone={reload} />
-          ) : newPack.trim() ? (
-            <Btn
-              variant="primary"
-              onClick={async () => {
-                try {
-                  const d = await api("/api/lists", {
-                    method: "POST",
-                    body: JSON.stringify({ name: newPack.trim() }),
-                  });
-                  setPackId(d.list.id);
-                  setNewPack("");
-                  reload();
-                } catch (e) {
-                  setMsg(e instanceof Error ? e.message : "Failed");
-                }
-              }}
-            >
-              [ create '{newPack.trim()}' first ]
-            </Btn>
-          ) : (
-            <p className="text-xs text-zinc-600">pick a list, then import</p>
-          )}
-        </Card>
-      )}
-
-      {adding && (
-        <Card className="mb-4">
-          <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-            <Inp label="list name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <Inp label="what's in it" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            <Btn variant="primary" onClick={create}>create</Btn>
-          </div>
-        </Card>
-      )}
+      <Card className="mb-4">
+        <div className="mb-3 grid gap-3 sm:grid-cols-[1fr_1fr]">
+          <Sel
+            label="into list"
+            value={packId}
+            onChange={(e) => { setPackId(e.target.value); if (e.target.value) setNewPack(""); }}
+          >
+            <option value="">— pick a list —</option>
+            {(data?.lists ?? []).map((l) => (
+              <option key={l.id} value={l.id}>{l.name} ({l.count})</option>
+            ))}
+          </Sel>
+          <Inp
+            label="or make a new one"
+            placeholder="list name"
+            value={newPack}
+            onChange={(e) => { setNewPack(e.target.value); if (e.target.value) setPackId(""); }}
+          />
+        </div>
+        {packId ? (
+          <ImportLeads listId={packId} onDone={reload} />
+        ) : newPack.trim() ? (
+          <Btn
+            variant="primary"
+            onClick={async () => {
+              try {
+                const d = await api("/api/lists", {
+                  method: "POST",
+                  body: JSON.stringify({ name: newPack.trim() }),
+                });
+                setPackId(d.list.id);
+                setNewPack("");
+                reload();
+              } catch (e) {
+                setMsg(e instanceof Error ? e.message : "Failed");
+              }
+            }}
+          >
+            [ create '{newPack.trim()}' ]
+          </Btn>
+        ) : (
+          <p className="text-xs text-zinc-600">pick a list above, or type a new list name</p>
+        )}
+      </Card>
 
       <Tbl head={["List", "Contacts", "About", ""]}>
         {(data?.lists ?? []).map((l) => (
@@ -119,7 +93,7 @@ export default function Lists() {
         {!data?.lists?.length && (
           <tr>
             <td colSpan={4} className="px-3 py-6 text-center text-zinc-600">
-              no lists — make one, then import a csv
+              no lists yet — type a name above to make one
             </td>
           </tr>
         )}

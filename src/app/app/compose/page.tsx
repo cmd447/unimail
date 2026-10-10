@@ -63,7 +63,7 @@ export default function Compose() {
             if (t) setDraft({ subject: t.subject, html: t.html, text: t.text });
           }}
         >
-          <option value="">load letter…</option>
+          <option value="">load template…</option>
           {tData?.templates.map((t: any) => (
             <option key={t.id} value={t.id}>
               {t.name}
@@ -81,7 +81,7 @@ export default function Compose() {
               label="Subject"
               value={draft.subject}
               onChange={(e) => setDraft((d) => ({ ...d, subject: e.target.value }))}
-              placeholder="subject — {{first_name}} swaps per contact"
+              placeholder="subject — {{first_name}} = their name"
             />
             <div className="mt-3 flex gap-1 border-b border-zinc-800 pb-2">
               {(["edit", "preview", "text"] as const).map((t) => (
@@ -177,12 +177,12 @@ export default function Compose() {
 
           <Card>
             <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
-              save as letter
+              save as template
             </h3>
             <div className="flex gap-2">
               <input
                 id="tpl-name"
-                placeholder="letter name"
+                placeholder="template name"
                 className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
               />
               <Btn
@@ -193,7 +193,7 @@ export default function Compose() {
                     method: "POST",
                     body: JSON.stringify({ name, ...draft, text: draft.text || htmlToText(draft.html) }),
                   });
-                  setMsg(`saved letter '${name}'`);
+                  setMsg(`saved template '${name}'`);
                 }}
               >
                 save

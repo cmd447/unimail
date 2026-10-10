@@ -36,7 +36,7 @@ export default function Settings() {
           <div>
             <h2 className="text-sm font-medium text-zinc-300">Kill switch</h2>
             <p className="text-xs text-zinc-500">
-              freezes every live blast at the next batch
+              stops all sending — nothing goes out while it's on
             </p>
           </div>
           <Btn
@@ -50,7 +50,7 @@ export default function Settings() {
               )
             }
           >
-            {s?.killSwitch ? "ON — blast frozen" : "off"}
+            {s?.killSwitch ? "ON — sending frozen" : "off"}
           </Btn>
         </div>
       </Card>
