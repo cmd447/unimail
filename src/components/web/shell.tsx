@@ -6,12 +6,12 @@ import { useEffect } from "react";
 import { api, useFetch } from "./api";
 
 const NAV = [
-  ["HQ", "/app"],
-  ["Write", "/app/compose"],
-  ["Leads", "/app/lists"],
-  ["Letters", "/app/templates"],
-  ["Blasts", "/app/campaigns"],
-  ["SMTP", "/app/profiles"],
+  ["Home", "/app"],
+  ["Senders", "/app/profiles"],
+  ["Contacts", "/app/lists"],
+  ["Templates", "/app/templates"],
+  ["Campaigns", "/app/campaigns"],
+  ["Compose", "/app/compose"],
   ["Settings", "/app/settings"],
 ] as const;
 
@@ -67,7 +67,7 @@ export default function WebShell({ children }: { children: React.ReactNode }) {
         <div className="hidden flex-1 items-center px-3 text-[11px] text-zinc-500 sm:flex">
           {active
             ? `sender: ${active.name} <${active.fromEmail}>`
-            : "no sender live"}
+            : "no sender active"}
         </div>
         <div className="flex-1 sm:hidden" />
         <Link
@@ -81,7 +81,7 @@ export default function WebShell({ children }: { children: React.ReactNode }) {
           onClick={logout}
           className="border-l border-zinc-700 px-3 py-2 text-[11px] text-zinc-400 hover:bg-zinc-800"
         >
-          [ dip ]
+          [ log out ]
         </button>
       </header>
 

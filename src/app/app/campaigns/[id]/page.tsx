@@ -67,13 +67,13 @@ export default function CampaignDetail() {
         }),
       });
       if (d.ok) {
-        setMsg({ text: `probe fired → ${d.seed} — hit 'check placement' in ~60s`, ok: true });
+        setMsg({ text: `test copy sent to ${d.seed} — check placement in ~60s`, ok: true });
         reloadLogs();
       } else {
-        setMsg({ text: d.error ?? "probe fumbled", ok: false });
+        setMsg({ text: d.error ?? "probe failed", ok: false });
       }
     } catch (e) {
-      setMsg({ text: e instanceof Error ? e.message : "probe fumbled", ok: false });
+      setMsg({ text: e instanceof Error ? e.message : "probe failed", ok: false });
     }
   };
 
@@ -91,11 +91,11 @@ export default function CampaignDetail() {
       });
       reloadLogs();
     } catch (e) {
-      setMsg({ text: e instanceof Error ? e.message : "scan fumbled", ok: false });
+      setMsg({ text: e instanceof Error ? e.message : "scan failed", ok: false });
     }
   };
 
-  if (!c) return <p className="text-sm text-zinc-600">pulling it up…</p>;
+  if (!c) return <p className="text-sm text-zinc-600">loading…</p>;
   const k = c.counters;
   const done = k.sent + k.failed + k.skipped;
 
@@ -103,18 +103,18 @@ export default function CampaignDetail() {
     <div>
       <PageHead title={c.name} sub={`${c.listName} · ${c.subject}`}>
         <Link href="/app/campaigns" className="self-center text-sm text-zinc-500 hover:text-zinc-300">
-          ← blasts
+          ← campaigns
         </Link>
         <Btn onClick={() => { reload(); loadMsgs(); reloadLogs(); reloadQueued(); }}>refresh</Btn>
-        <Btn onClick={probe}>[ probe inbox ]</Btn>
+        <Btn onClick={probe}>[ test placement ]</Btn>
         <Btn onClick={checkProbes}>[ check placement ]</Btn>
         {["draft", "scheduled", "failed"].includes(c.status) && (
-          <Btn variant="primary" onClick={() => act("send")}>blast it</Btn>
+          <Btn variant="primary" onClick={() => act("send")}>send</Btn>
         )}
-        {c.status === "sending" && <Btn onClick={() => act("pause")}>hold</Btn>}
-        {c.status === "paused" && <Btn variant="primary" onClick={() => act("resume")}>keep going</Btn>}
+        {c.status === "sending" && <Btn onClick={() => act("pause")}>pause</Btn>}
+        {c.status === "paused" && <Btn variant="primary" onClick={() => act("resume")}>resume</Btn>}
         {!["completed", "cancelled"].includes(c.status) && (
-          <Btn variant="danger" onClick={() => confirm("call this blast off?") && act("cancel")}>
+          <Btn variant="danger" onClick={() => confirm("call this campaign off?") && act("cancel")}>
             cancel
           </Btn>
         )}
@@ -129,16 +129,16 @@ export default function CampaignDetail() {
         {c.error && <span className="text-xs text-red-400">{c.error}</span>}
         {c.scheduledAt && (
           <span className="text-xs text-zinc-500">
-            drops {new Date(c.scheduledAt).toLocaleString()}
+            sends {new Date(c.scheduledAt).toLocaleString()}
           </span>
         )}
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
-          ["Leads", k.total],
-          ["Landed", k.sent],
-          ["Fumbled", k.failed],
+          ["Contacts", k.total],
+          ["Sent", k.sent],
+          ["Failed", k.failed],
           ["Skipped", k.skipped],
           ["Left", k.total - done],
         ].map(([l, v]) => (
@@ -155,7 +155,7 @@ export default function CampaignDetail() {
         </h2>
         {(queued?.messages?.length ?? 0) > 0 && (
           <div className="mb-2 border border-zinc-800 px-2 py-1.5 font-mono text-[11px] text-zinc-500">
-            <span className="text-sky-400">queued up next</span>
+            <span className="text-sky-400">up next</span>
             {" — "}
             {queued!.messages.map((m) => m.email).join("  ·  ")}
             {c.counters.total - done > queued!.messages.length && (
@@ -169,21 +169,21 @@ export default function CampaignDetail() {
       </div>
 
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-zinc-300">the leads</h2>
+        <h2 className="text-sm font-medium text-zinc-300">contacts</h2>
         <Sel
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="w-36"
         >
           <option value="">all</option>
-          <option value="queued">in line</option>
-          <option value="sent">landed</option>
-          <option value="failed">fumbled</option>
+          <option value="queued">queued</option>
+          <option value="sent">sent</option>
+          <option value="failed">failed</option>
           <option value="skipped">skipped</option>
         </Sel>
       </div>
 
-      <Tbl head={["Lead", "State", "Tries", "smtp response / error", "Landed"]}>
+      <Tbl head={["Contact", "Status", "Attempts", "smtp response / error", "Sent"]}>
         {msgs.map((m) => (
           <tr key={m.id}>
             <td className="px-3 py-2 text-zinc-300">{m.email}</td>
@@ -202,7 +202,7 @@ export default function CampaignDetail() {
         {!msgs.length && (
           <tr>
             <td colSpan={5} className="px-3 py-6 text-center text-zinc-600">
-              no leads in this blast
+              no contacts in this campaign
             </td>
           </tr>
         )}

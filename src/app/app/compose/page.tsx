@@ -54,7 +54,7 @@ export default function Compose() {
 
   return (
     <div>
-      <PageHead title="Write" sub="cook up a letter — it personalizes per lead">
+      <PageHead title="Compose" sub="send a one-off — every recipient gets their own version">
         <Sel
           value=""
           className="w-48"
@@ -63,7 +63,7 @@ export default function Compose() {
             if (t) setDraft({ subject: t.subject, html: t.html, text: t.text });
           }}
         >
-          <option value="">load letter…</option>
+          <option value="">load template…</option>
           {tData?.templates.map((t: any) => (
             <option key={t.id} value={t.id}>
               {t.name}
@@ -81,7 +81,7 @@ export default function Compose() {
               label="Subject"
               value={draft.subject}
               onChange={(e) => setDraft((d) => ({ ...d, subject: e.target.value }))}
-              placeholder="subject — {{first_name}} swaps per lead"
+              placeholder="subject — {{first_name}} swaps per contact"
             />
             <div className="mt-3 flex gap-1 border-b border-zinc-800 pb-2">
               {(["edit", "preview", "text"] as const).map((t) => (
@@ -92,7 +92,7 @@ export default function Compose() {
                     tab === t ? "bg-zinc-800 text-zinc-300" : "text-zinc-500"
                   }`}
                 >
-                  {t === "text" ? "plain" : t === "edit" ? "letter (html)" : t}
+                  {t === "text" ? "plain" : t === "edit" ? "html" : t}
                 </button>
               ))}
             </div>
@@ -135,7 +135,7 @@ export default function Compose() {
         <div className="space-y-4">
           <Card>
             <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
-              per-lead swaps
+              per-contact swaps
             </h3>
             <div className="flex flex-wrap gap-1.5">
               {TAGS.map((t) => (
@@ -149,16 +149,16 @@ export default function Compose() {
               ))}
             </div>
             <p className="mt-2 text-xs text-zinc-600">
-              every lead gets their own version — any csv field works: {`{{company}}`}, {`{{city}}`}, whatever's in the pack
+              every contact gets their own version — any csv field works: {`{{company}}`}, {`{{city}}`}, whatever's in the list
             </p>
           </Card>
 
           <Card>
             <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
-              test blast
+              test send
             </h3>
             <p className="mb-2 text-xs text-zinc-600">
-              via {active ? `${active.name} (${active.fromEmail})` : "no sender live"}
+              via {active ? `${active.name} (${active.fromEmail})` : "no sender active"}
             </p>
             <div className="flex gap-2">
               <input
@@ -177,12 +177,12 @@ export default function Compose() {
 
           <Card>
             <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
-              stash as letter
+              save as template
             </h3>
             <div className="flex gap-2">
               <input
                 id="tpl-name"
-                placeholder="letter name"
+                placeholder="template name"
                 className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
               />
               <Btn
@@ -193,7 +193,7 @@ export default function Compose() {
                     method: "POST",
                     body: JSON.stringify({ name, ...draft, text: draft.text || htmlToText(draft.html) }),
                   });
-                  setMsg(`stashed letter '${name}'`);
+                  setMsg(`saved template '${name}'`);
                 }}
               >
                 save

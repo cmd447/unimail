@@ -32,7 +32,7 @@ export function LogDetail({
 }) {
   const [msg, setMsg] = useState<any | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [view, setView] = useState<"letter" | "plain" | "raw">("letter");
+  const [view, setView] = useState<"template" | "plain" | "raw">("template");
   const [fetched, setFetched] = useState(false);
 
   const mid = event?.meta?.messageId;
@@ -40,7 +40,7 @@ export function LogDetail({
     setFetched(true);
     api(`/api/message?c=${event.campaignId}&m=${mid}`)
       .then((d) => setMsg(d.message))
-      .catch((e) => setErr(e instanceof Error ? e.message : "fetch fumbled"));
+      .catch((e) => setErr(e instanceof Error ? e.message : "fetch failed"));
   }
 
   if (!event) return null;
@@ -62,18 +62,18 @@ export function LogDetail({
           <Btn onClick={onClose}>[ close ]</Btn>
         </div>
 
-        <h3 className="mb-1 text-xs uppercase text-zinc-500">smtp receipt</h3>
+        <h3 className="mb-1 text-xs uppercase text-zinc-500">delivery receipt</h3>
         <div className="mb-4 border border-zinc-800 px-2">
-          <ROW k="blast" v={event.campaignName} />
+          <ROW k="campaign" v={event.campaignName} />
           <ROW k="detail" v={event.detail} />
           {Object.entries(event.meta ?? {}).map(([k, v]) => (
             <ROW key={k} k={k} v={v} />
           ))}
           {msg && (
             <>
-              <ROW k="lead first" v={msg.firstName} />
-              <ROW k="lead last" v={msg.lastName} />
-              <ROW k="lead fields" v={msg.fields && Object.keys(msg.fields).length ? msg.fields : null} />
+              <ROW k="contact first" v={msg.firstName} />
+              <ROW k="contact last" v={msg.lastName} />
+              <ROW k="contact fields" v={msg.fields && Object.keys(msg.fields).length ? msg.fields : null} />
               <ROW k="attempts" v={msg.attempts} />
               <ROW k="sent at" v={msg.sentAt} />
               <ROW k="error" v={msg.error} />
@@ -88,24 +88,24 @@ export function LogDetail({
           </p>
         )}
         {mid && !msg && !err && (
-          <p className="text-xs text-zinc-600">pulling the letter…</p>
+          <p className="text-xs text-zinc-600">loading template…</p>
         )}
 
         {r && (
           <>
             <div className="mb-2 flex items-center gap-2">
-              <h3 className="text-xs uppercase text-zinc-500">the letter as sent</h3>
-              <Btn onClick={() => setView("letter")}>{view === "letter" ? "• html •" : "html"}</Btn>
+              <h3 className="text-xs uppercase text-zinc-500">the email as sent</h3>
+              <Btn onClick={() => setView("template")}>{view === "template" ? "• html •" : "html"}</Btn>
               <Btn onClick={() => setView("plain")}>{view === "plain" ? "• plain •" : "plain"}</Btn>
               <Btn onClick={() => setView("raw")}>{view === "raw" ? "• raw •" : "raw"}</Btn>
             </div>
             <p className="mb-2 text-xs text-zinc-400">subject: {r.subject}</p>
-            {view === "letter" && (
+            {view === "template" && (
               <iframe
                 sandbox=""
                 srcDoc={r.html}
                 className="h-[420px] w-full border border-zinc-800 bg-white"
-                title="letter"
+                title="template"
               />
             )}
             {view === "plain" && (
@@ -122,7 +122,7 @@ export function LogDetail({
         )}
         {msg && !r && (
           <p className="text-xs text-zinc-600">
-            letter wasn't stored for this one (skipped/queued or sent before letter tracking).
+            template wasn't stored for this one (skipped/queued or sent before template tracking).
           </p>
         )}
       </Card>
@@ -161,7 +161,7 @@ export function LogFeed({ events }: { events: any[] }) {
         ))}
         {!events.length && (
           <div className="px-3 py-6 text-center text-zinc-600">
-            no logs yet — they drop the second a lead gets hit
+            nothing yet — entries appear as emails go out
           </div>
         )}
       </div>

@@ -55,12 +55,12 @@ export default function ListDetail() {
     <div>
       <PageHead
         title={list?.name ?? "List"}
-        sub={`${list?.count ?? contacts.length} leads`}
+        sub={`${list?.count ?? contacts.length} contacts`}
       >
         <Link href="/app/lists" className="self-center text-sm text-zinc-500 hover:text-zinc-300">
           ← lists
         </Link>
-        <Btn onClick={() => setAdding(!adding)}>+ add lead</Btn>
+        <Btn onClick={() => setAdding(!adding)}>+ add contact</Btn>
         <Btn
           onClick={async () => {
             setImporting("resolving real names…");
@@ -72,7 +72,7 @@ export default function ListDetail() {
               const src = Object.entries(d.bySource ?? {})
                 .map(([k, v]) => `${v} via ${k}`)
                 .join(", ");
-              setMsg(`checked ${d.checked} nameless leads — ${d.resolved} real names found${src ? ` (${src})` : ""}`);
+              setMsg(`checked ${d.checked} nameless contacts — ${d.resolved} real names found${src ? ` (${src})` : ""}`);
             } catch (e) {
               setMsg(e instanceof Error ? e.message : "Failed");
             } finally {
@@ -84,7 +84,7 @@ export default function ListDetail() {
           resolve names
         </Btn>
         <Btn variant="primary" onClick={() => setShowImport(!showImport)}>
-          [ import leads ]
+          [ import ]
         </Btn>
       </PageHead>
 
@@ -102,7 +102,7 @@ export default function ListDetail() {
       {adding && (
         <Card className="my-3">
           <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
-            <Inp label="lead email" type="email" inputMode="email" value={nc.email} onChange={(e) => setNc({ ...nc, email: e.target.value })} />
+            <Inp label="contact email" type="email" inputMode="email" value={nc.email} onChange={(e) => setNc({ ...nc, email: e.target.value })} />
             <Inp label="first name (for {{first_name}})" value={nc.firstName} onChange={(e) => setNc({ ...nc, firstName: e.target.value })} />
             <Inp label="last name" value={nc.lastName} onChange={(e) => setNc({ ...nc, lastName: e.target.value })} />
             <Btn variant="primary" onClick={addContact}>add</Btn>
@@ -110,7 +110,7 @@ export default function ListDetail() {
         </Card>
       )}
 
-      <Tbl head={["Lead", "Name", "State", ""]}>
+      <Tbl head={["Contact", "Name", "Status", ""]}>
         {contacts.map((c) => (
           <tr key={c.id}>
             <td className="px-3 py-2 text-zinc-300">{c.email}</td>
@@ -128,7 +128,7 @@ export default function ListDetail() {
                   reload();
                 }}
               >
-                yeet
+                delete
               </Btn>
             </td>
           </tr>
@@ -136,14 +136,14 @@ export default function ListDetail() {
         {!contacts.length && (
           <tr>
             <td colSpan={4} className="px-3 py-6 text-center text-zinc-600">
-              empty pack — import a csv or add leads
+              empty list — import a csv or add contacts
             </td>
           </tr>
         )}
       </Tbl>
       {next && (
         <div className="mt-3 text-center">
-          <Btn onClick={() => load(next)}>load more leads</Btn>
+          <Btn onClick={() => load(next)}>load more</Btn>
         </div>
       )}
     </div>

@@ -14,14 +14,14 @@ export default function Campaigns() {
 
   return (
     <div>
-      <PageHead title="Blasts" sub="the send queue">
+      <PageHead title="Campaigns" sub="every send — click one for the receipts">
         <Btn onClick={reload}>refresh</Btn>
         <Link href="/app/campaigns/new">
-          <Btn variant="primary">+ new blast</Btn>
+          <Btn variant="primary">+ new send</Btn>
         </Link>
       </PageHead>
 
-      <Tbl head={["Blast", "Pack", "State", "Landed", "Dropped", ""]}>
+      <Tbl head={["Campaign", "List", "Status", "Sent", "Failed", ""]}>
         {(data?.campaigns ?? []).map((c) => {
           const done = c.counters.sent + c.counters.failed + c.counters.skipped;
           const pct = Math.round((100 * done) / Math.max(1, c.counters.total));
@@ -52,10 +52,10 @@ export default function Campaigns() {
               <td className="px-3 py-2">
                 <div className="flex justify-end gap-1.5">
                   {["draft", "scheduled", "failed"].includes(c.status) && (
-                    <Btn onClick={() => act(c.id, "send")}>blast it</Btn>
+                    <Btn onClick={() => act(c.id, "send")}>send</Btn>
                   )}
-                  {c.status === "sending" && <Btn onClick={() => act(c.id, "pause")}>hold</Btn>}
-                  {c.status === "paused" && <Btn onClick={() => act(c.id, "resume")}>keep going</Btn>}
+                  {c.status === "sending" && <Btn onClick={() => act(c.id, "pause")}>pause</Btn>}
+                  {c.status === "paused" && <Btn onClick={() => act(c.id, "resume")}>resume</Btn>}
                   {!["completed", "cancelled"].includes(c.status) && (
                     <Btn
                       variant="danger"
@@ -67,12 +67,12 @@ export default function Campaigns() {
                   <Btn
                     variant="danger"
                     onClick={async () => {
-                      if (!confirm(`yeet '${c.name}'?`)) return;
+                      if (!confirm(`delete '${c.name}'?`)) return;
                       await api(`/api/campaigns/${c.id}`, { method: "DELETE" });
                       reload();
                     }}
                   >
-                    yeet
+                    delete
                   </Btn>
                 </div>
               </td>
@@ -82,7 +82,7 @@ export default function Campaigns() {
         {!data?.campaigns?.length && (
           <tr>
             <td colSpan={6} className="px-3 py-6 text-center text-zinc-600">
-              no blasts — go cook one
+              no campaigns — go create one
             </td>
           </tr>
         )}

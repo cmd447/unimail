@@ -13,7 +13,7 @@ export async function importRows(
 ) {
   let added = 0, skipped = 0, invalid = 0;
   for (let i = 0; i < rows.length; i += 400) {
-    onProgress(`bagging leads ${i}–${Math.min(i + 400, rows.length)} of ${rows.length}…`);
+    onProgress(`bagging contacts ${i}–${Math.min(i + 400, rows.length)} of ${rows.length}…`);
     const d = await api("/api/contacts/import", {
       method: "POST",
       body: JSON.stringify({ listId, rows: rows.slice(i, i + 400) }),
@@ -42,11 +42,11 @@ export function ImportLeads({
     setMsg(null);
     try {
       const r = await importRows(listId, rows, setBusy);
-      setMsg(`${r.added} leads bagged · ${r.skipped} dupes yeeted · ${r.invalid} fumbled`);
+      setMsg(`${r.added} contacts bagged · ${r.skipped} dupes yeeted · ${r.invalid} failed`);
       setPaste("");
       onDone();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "import fumbled");
+      setMsg(e instanceof Error ? e.message : "import failed");
     } finally {
       setBusy(null);
     }
@@ -93,7 +93,7 @@ export function ImportLeads({
         />
       </div>
       <Btn variant="primary" disabled={!paste.trim()} onClick={() => run(parsePaste(paste))}>
-        [ bag 'em ]
+        [ import ]
       </Btn>
     </div>
   );

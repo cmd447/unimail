@@ -15,22 +15,47 @@ export default function Overview() {
   const active = profiles.data?.profiles.find((p) => p.isActive);
   const contacts = lists.data?.lists.reduce((s, l) => s + (l.count || 0), 0) ?? 0;
 
-  const stats = [
-    ["Senders", profiles.data?.profiles.length ?? "—"],
-    ["Letters", templates.data?.templates.length ?? "—"],
-    ["Leads", contacts],
-    ["Blasts", campaigns.data?.campaigns.length ?? "—"],
+  const steps = [
+    {
+      n: "1",
+      label: "add a sender",
+      why: "the smtp account emails go out through",
+      done: (profiles.data?.profiles.length ?? 0) > 0,
+      href: "/app/profiles",
+    },
+    {
+      n: "2",
+      label: "add contacts",
+      why: `${contacts || "no"} loaded — paste or csv`,
+      done: contacts > 0,
+      href: "/app/lists",
+    },
+    {
+      n: "3",
+      label: "write a template",
+      why: "one email — {{first_name}} personalizes it per contact",
+      done: (templates.data?.templates.length ?? 0) > 0,
+      href: "/app/templates",
+    },
+    {
+      n: "4",
+      label: "send a campaign",
+      why: "pick the three above, hit send",
+      done: (campaigns.data?.campaigns.length ?? 0) > 0,
+      href: "/app/campaigns/new",
+    },
   ];
+  const doneCount = steps.filter((s) => s.done).length;
 
   return (
     <div>
-      <PageHead title="HQ" sub="the hub — everything at a glance" />
+      <PageHead title="Home" sub="what's set up and what's going out" />
 
       {settings.data?.settings.killSwitch ? (
         <Card className="mb-4 border-red-900/60 bg-red-950/20">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-red-400">
-              KILL SWITCH ON — all blasts frozen
+              kill switch on — all sends paused
             </span>
             <Link href="/app/settings" className="text-xs text-red-300 underline">
               fix it →
@@ -39,21 +64,38 @@ export default function Overview() {
         </Card>
       ) : null}
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {stats.map(([label, v]) => (
-          <Card key={label}>
-            <div className="text-2xl font-semibold text-zinc-300">{v}</div>
-            <div className="text-xs text-zinc-500">{label}</div>
-          </Card>
+      <Card className="mb-6">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="text-sm font-medium text-zinc-300">getting started</h2>
+          <span className="text-xs text-zinc-500">{doneCount}/4 done</span>
+        </div>
+        {steps.map((s) => (
+          <Link
+            key={s.n}
+            href={s.href}
+            className="flex items-baseline gap-3 border-t border-zinc-800 py-2.5 hover:bg-zinc-900/40"
+          >
+            <span
+              className={`w-14 shrink-0 text-[11px] uppercase ${
+                s.done ? "text-green-500" : "text-zinc-600"
+              }`}
+            >
+              {s.done ? "done" : `step ${s.n}`}
+            </span>
+            <span className={s.done ? "text-zinc-400" : "font-medium text-zinc-200"}>
+              {s.label}
+            </span>
+            <span className="ml-auto text-[11px] text-zinc-600">{s.why}</span>
+          </Link>
         ))}
-      </div>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-zinc-300">live sender</h2>
+            <h2 className="text-sm font-medium text-zinc-300">active sender</h2>
             <Link href="/app/profiles" className="text-xs text-zinc-500 hover:text-zinc-300">
-              rigs →
+              all senders →
             </Link>
           </div>
           {active ? (
@@ -80,16 +122,16 @@ export default function Overview() {
             </div>
           ) : (
             <p className="text-sm text-zinc-500">
-              no sender live —{" "}
+              none yet —{" "}
               <Link href="/app/profiles" className="underline">
-                pick one
+                add a sender
               </Link>
             </p>
           )}
         </Card>
 
         <Card>
-          <h2 className="mb-3 text-sm font-medium text-zinc-300">latest receipts</h2>
+          <h2 className="mb-3 text-sm font-medium text-zinc-300">recent activity</h2>
           <div className="space-y-1.5">
             {(events.data?.events ?? []).map((e: any, i: number) => (
               <div key={i} className="flex items-center gap-2 text-xs">
@@ -101,7 +143,7 @@ export default function Overview() {
               </div>
             ))}
             {!events.data?.events?.length && (
-              <p className="text-xs text-zinc-600">quiet so far</p>
+              <p className="text-xs text-zinc-600">nothing yet</p>
             )}
           </div>
         </Card>
@@ -111,7 +153,7 @@ export default function Overview() {
         ["sending", "paused", "scheduled"].includes(c.status),
       ).length ? (
         <Card className="mt-4">
-          <h2 className="mb-3 text-sm font-medium text-zinc-300">blasting rn</h2>
+          <h2 className="mb-3 text-sm font-medium text-zinc-300">in progress</h2>
           {campaigns.data.campaigns
             .filter((c) => ["sending", "paused", "scheduled"].includes(c.status))
             .map((c) => (

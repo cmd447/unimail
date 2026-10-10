@@ -25,28 +25,28 @@ export default function Lists() {
 
   return (
     <div>
-      <PageHead title="Leads" sub="lead packs for your blasts">
-        <Btn onClick={() => { setImporting(!importing); setAdding(false); }}>[ import leads ]</Btn>
-        <Btn variant="primary" onClick={() => { setAdding(!adding); setImporting(false); }}>+ new pack</Btn>
+      <PageHead title="Contacts" sub="import contacts into lists — paste or a csv">
+        <Btn onClick={() => { setImporting(!importing); setAdding(false); }}>[ import ]</Btn>
+        <Btn variant="primary" onClick={() => { setAdding(!adding); setImporting(false); }}>+ new list</Btn>
       </PageHead>
       <Err msg={msg} />
 
       {importing && (
         <Card className="mb-4">
-          <h3 className="mb-3 text-sm font-medium text-zinc-300">bag some leads</h3>
+          <h3 className="mb-3 text-sm font-medium text-zinc-300">import contacts</h3>
           <div className="mb-3 grid gap-3 sm:grid-cols-[1fr_1fr]">
             <Sel
-              label="into pack"
+              label="into list"
               value={packId}
               onChange={(e) => { setPackId(e.target.value); if (e.target.value) setNewPack(""); }}
             >
-              <option value="">— pick a pack —</option>
+              <option value="">— pick a list —</option>
               {(data?.lists ?? []).map((l) => (
                 <option key={l.id} value={l.id}>{l.name} ({l.count})</option>
               ))}
             </Sel>
             <Inp
-              label="or new pack name"
+              label="or new list name"
               value={newPack}
               onChange={(e) => { setNewPack(e.target.value); if (e.target.value) setPackId(""); }}
             />
@@ -73,7 +73,7 @@ export default function Lists() {
               [ create '{newPack.trim()}' first ]
             </Btn>
           ) : (
-            <p className="text-xs text-zinc-600">choose a pack to unlock upload/paste</p>
+            <p className="text-xs text-zinc-600">pick a list, then import</p>
           )}
         </Card>
       )}
@@ -81,14 +81,14 @@ export default function Lists() {
       {adding && (
         <Card className="mb-4">
           <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-            <Inp label="pack name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Inp label="list name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <Inp label="what's in it" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             <Btn variant="primary" onClick={create}>create</Btn>
           </div>
         </Card>
       )}
 
-      <Tbl head={["Pack", "Leads", "About", ""]}>
+      <Tbl head={["List", "Contacts", "About", ""]}>
         {(data?.lists ?? []).map((l) => (
           <tr key={l.id}>
             <td className="px-3 py-2">
@@ -102,7 +102,7 @@ export default function Lists() {
               <Btn
                 variant="danger"
                 onClick={async () => {
-                  if (!confirm(`yeet pack '${l.name}'?`)) return;
+                  if (!confirm(`delete list '${l.name}'?`)) return;
                   try {
                     await api(`/api/lists/${l.id}`, { method: "DELETE" });
                     reload();
@@ -111,7 +111,7 @@ export default function Lists() {
                   }
                 }}
               >
-                yeet
+                delete
               </Btn>
             </td>
           </tr>
@@ -119,7 +119,7 @@ export default function Lists() {
         {!data?.lists?.length && (
           <tr>
             <td colSpan={4} className="px-3 py-6 text-center text-zinc-600">
-              no packs — make one, then import a csv
+              no lists — make one, then import a csv
             </td>
           </tr>
         )}

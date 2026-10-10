@@ -28,7 +28,7 @@ export default function Settings() {
 
   return (
     <div className="max-w-2xl">
-      <PageHead title="Settings" sub="house rules" />
+      <PageHead title="Settings" sub="caps, seed inbox, suppressions" />
       <Err msg={msg} />
 
       <Card className="mb-4">
@@ -36,11 +36,11 @@ export default function Settings() {
           <div>
             <h2 className="text-sm font-medium text-zinc-300">Kill switch</h2>
             <p className="text-xs text-zinc-500">
-              freezes every live blast at the next batch
+              freezes every live campaign at the next batch
             </p>
           </div>
           <Btn
-            variant={s?.killSwitch ? "danger" : "ghost"}
+            variant={s?.killSwitch ? "danger" : "suppress"}
             onClick={() =>
               run(() =>
                 api("/api/settings", {
@@ -50,15 +50,15 @@ export default function Settings() {
               )
             }
           >
-            {s?.killSwitch ? "ON — blasts frozen" : "off"}
+            {s?.killSwitch ? "ON — campaigns frozen" : "off"}
           </Btn>
         </div>
       </Card>
 
       <Card className="mb-4">
-        <h2 className="text-sm font-medium text-zinc-300">Daily blast cap</h2>
+        <h2 className="text-sm font-medium text-zinc-300">Daily send limit</h2>
         <p className="mb-3 text-xs text-zinc-500">
-          max emails a day across everything · 0 = go crazy · current:{" "}
+          max emails per day across everything · 0 = no limit · current:{" "}
           {s?.dailyCap || "unlimited"}
         </p>
         <div className="flex max-w-56 gap-2">
@@ -86,11 +86,11 @@ export default function Settings() {
       <Card className="mb-4">
         <h2 className="text-sm font-medium text-zinc-300">Seed inbox — spam detection</h2>
         <p className="mb-3 text-xs text-zinc-500">
-          a mailbox YOU own (a gmail works). every blast fires one copy here,
-          then cron checks whether it landed inbox or spam.
+          a mailbox you own (a gmail works). every campaign sends one copy here,
+          then cron checks whether it sent in inbox or spam.
           {s?.seedEmail && (
             <>
-              {" "}armed: <span className="text-zinc-300">{s.seedEmail}</span>
+              {" "}active: <span className="text-zinc-300">{s.seedEmail}</span>
               {s.seedImapPassSet ? " · imap set" : " · no imap pass"}
             </>
           )}
@@ -152,20 +152,20 @@ export default function Settings() {
             )
           }
         >
-          [ arm the probe ]
+          [ save ]
         </Btn>
       </Card>
 
       <Card>
-        <h2 className="mb-1 text-sm font-medium text-zinc-300">Ghosted leads</h2>
+        <h2 className="mb-1 text-sm font-medium text-zinc-300">Suppressed</h2>
         <p className="mb-3 text-xs text-zinc-500">
-          leads who dipped or bounced — never hit them again
+          addresses that unsubscribed or bounced — skipped automatically
         </p>
         <div className="mb-3 flex max-w-md gap-2">
           <Inp
             type="email"
             inputMode="email"
-            placeholder="lead to ghost"
+            placeholder="email to suppress"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
           />
@@ -181,10 +181,10 @@ export default function Settings() {
               setNewEmail("");
             }}
           >
-            ghost
+            suppress
           </Btn>
         </div>
-        <Tbl head={["Lead", "Why", "When", ""]}>
+        <Tbl head={["Contact", "Reason", "When", ""]}>
           {(supp.data?.suppressions ?? []).map((x: any) => (
             <tr key={x.email}>
               <td className="px-3 py-2 text-zinc-300">{x.email}</td>
@@ -208,7 +208,7 @@ export default function Settings() {
                     )
                   }
                 >
-                  un-ghost
+                  un-suppress
                 </Btn>
               </td>
             </tr>

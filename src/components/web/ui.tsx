@@ -40,12 +40,12 @@ export function Card({
 
 export function Btn({
   children,
-  variant = "ghost",
+  variant = "suppress",
   onClick,
   disabled,
   ...rest
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "ghost" | "danger";
+  variant?: "primary" | "suppress" | "danger";
 }) {
   const [pend, setPend] = React.useState(false);
   const cls =

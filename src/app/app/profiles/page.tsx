@@ -32,7 +32,7 @@ export default function Profiles() {
       }
       setEditing(null);
       reload();
-      setMsg({ text: "rig saved.", ok: true });
+      setMsg({ text: "sender saved.", ok: true });
     } catch (e) {
       setMsg({ text: e instanceof Error ? e.message : "Failed", ok: false });
     } finally {
@@ -52,7 +52,7 @@ export default function Profiles() {
 
   return (
     <div>
-      <PageHead title="SMTP" sub="your smtp rigs — pick who's blasting">
+      <PageHead title="Senders" sub="the accounts emails go out through — add one and verify it">
         <Btn
           variant="primary"
           onClick={() => {
@@ -60,7 +60,7 @@ export default function Profiles() {
             setEditing({});
           }}
         >
-          + hook up a rig
+          + add a sender
         </Btn>
       </PageHead>
 
@@ -69,10 +69,10 @@ export default function Profiles() {
       {editing !== null && (
         <Card className="my-4">
           <h2 className="mb-3 text-sm font-medium text-zinc-300">
-            {editing.id ? `editing ${editing.name}` : "new rig"}
+            {editing.id ? `editing ${editing.name}` : "new sender"}
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Inp label="rig name" value={form.name} onChange={(e) => set("name", e.target.value)} />
+            <Inp label="sender name" value={form.name} onChange={(e) => set("name", e.target.value)} />
             <Inp label="smtp host" inputMode="url" value={form.host} onChange={(e) => set("host", e.target.value)} placeholder="smtp.gmail.com" />
             <Sel label="encryption" value={form.encryption} onChange={(e) => set("encryption", e.target.value)}>
               <option value="ssl">SSL (465)</option>
@@ -81,11 +81,11 @@ export default function Profiles() {
             </Sel>
             <Inp label="Port" inputMode="numeric" value={form.port} onChange={(e) => set("port", e.target.value)} />
             <Inp label="login" inputMode="email" autoComplete="off" value={form.user} onChange={(e) => set("user", e.target.value)} />
-            <Inp label={editing.id ? "passkey (blank = keep)" : "app passkey"} type="password" autoComplete="new-password" value={form.password} onChange={(e) => set("password", e.target.value)} />
-            <Inp label="from name (what leads see)" value={form.fromName} onChange={(e) => set("fromName", e.target.value)} />
+            <Inp label={editing.id ? "password (blank = keep)" : "app password"} type="password" autoComplete="new-password" value={form.password} onChange={(e) => set("password", e.target.value)} />
+            <Inp label="from name (what contacts see)" value={form.fromName} onChange={(e) => set("fromName", e.target.value)} />
             <Inp label="from email" type="email" inputMode="email" value={form.fromEmail} onChange={(e) => set("fromEmail", e.target.value)} />
             <Inp label="reply-to (optional)" type="email" inputMode="email" value={form.replyTo} onChange={(e) => set("replyTo", e.target.value)} />
-            <Inp label="max blasts/min" inputMode="numeric" value={form.rateLimit} onChange={(e) => set("rateLimit", e.target.value)} />
+            <Inp label="send speed (emails/min)" inputMode="numeric" value={form.rateLimit} onChange={(e) => set("rateLimit", e.target.value)} />
             <Inp label="imap host — catches bounces (optional)" inputMode="url" value={form.imapHost} onChange={(e) => set("imapHost", e.target.value)} />
             <Inp label="imap port" inputMode="numeric" value={form.imapPort} onChange={(e) => set("imapPort", e.target.value)} />
           </div>
@@ -98,7 +98,7 @@ export default function Profiles() {
         </Card>
       )}
 
-      <Tbl head={["Rig", "Server", "From", "State", ""]}>
+      <Tbl head={["Sender", "Server", "From", "Status", ""]}>
         {(data?.profiles ?? []).map((p) => (
           <tr key={p.id} className="text-zinc-300">
             <td className="px-3 py-2 font-medium">
@@ -130,17 +130,17 @@ export default function Profiles() {
                       const v = await api(`/api/profiles/${p.id}/verify`, { method: "POST" });
                       setMsg(
                         v.ok
-                          ? { text: `${p.name}: line's clean — smtp handshake + login OK`, ok: true }
+                          ? { text: `${p.name}: verified — connection and login work`, ok: true }
                           : { text: `${p.name}: ${v.error}`, ok: false },
                       );
                     })
                   }
                 >
-                  ping
+                  verify
                 </Btn>
                 {!p.isDefault && (
                   <Btn onClick={() => act(() => api(`/api/profiles/${p.id}`, { method: "PATCH", body: JSON.stringify({ isDefault: true }) }))}>
-                    make main
+                    set default
                   </Btn>
                 )}
                 <Btn
@@ -154,11 +154,11 @@ export default function Profiles() {
                 <Btn
                   variant="danger"
                   onClick={() => {
-                    if (confirm(`yeet '${p.name}'?`))
+                    if (confirm(`delete '${p.name}'?`))
                       act(() => api(`/api/profiles/${p.id}`, { method: "DELETE" }));
                   }}
                 >
-                  yeet
+                  delete
                 </Btn>
               </div>
             </td>
@@ -167,7 +167,7 @@ export default function Profiles() {
         {!data?.profiles?.length && (
           <tr>
             <td colSpan={5} className="px-3 py-6 text-center text-zinc-600">
-              no rigs — hook one up
+              no senders — hook one up
             </td>
           </tr>
         )}

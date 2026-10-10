@@ -18,9 +18,9 @@ const KV = ({ k, v }: { k: string; v: unknown }) =>
     </div>
   );
 
-const fmtEta = (leads: number, perMin: number) => {
-  if (!leads || !perMin) return null;
-  const mins = Math.ceil(leads / perMin);
+const fmtEta = (contacts: number, perMin: number) => {
+  if (!contacts || !perMin) return null;
+  const mins = Math.ceil(contacts / perMin);
   if (mins < 1) return "<1 min";
   if (mins < 60) return `~${mins} min`;
   return `~${Math.floor(mins / 60)}h ${mins % 60}m`;
@@ -35,43 +35,43 @@ export default function NewCampaign() {
     name: "", profileId: "", listId: "", templateId: "",
     subject: "", rateLimit: "", replyTo: "", fromName: "", scheduledAt: "",
   });
-  const [leadSrc, setLeadSrc] = useState<"pack" | "paste">("pack");
+  const [leadSrc, setLeadSrc] = useState<"list" | "paste">("list");
   const [paste, setPaste] = useState("");
   const [testTo, setTestTo] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const rig =
+  const sender =
     profiles.data?.profiles.find((p) => p.id === form.profileId) ??
     profiles.data?.profiles.find((p) => p.isActive) ??
     profiles.data?.profiles.find((p) => p.isDefault);
-  const pack = lists.data?.lists.find((l) => l.id === form.listId);
+  const list = lists.data?.lists.find((l) => l.id === form.listId);
   const tpl = templates.data?.templates.find((t) => t.id === form.templateId);
 
   const pastedRows = leadSrc === "paste" ? parsePaste(paste) : [];
-  const leadCount = leadSrc === "pack" ? (pack?.count ?? 0) : pastedRows.length;
-  const effRate = parseInt(form.rateLimit, 10) || rig?.rateLimit || 60;
+  const leadCount = leadSrc === "list" ? (list?.count ?? 0) : pastedRows.length;
+  const effRate = parseInt(form.rateLimit, 10) || sender?.rateLimit || 60;
   const eta = fmtEta(leadCount, effRate);
   const subject = form.subject || tpl?.subject || "";
   const report = tpl ? spamReport(subject, tpl.html, tpl.text ?? "") : null;
   const tags = tpl ? extractTags(`${subject} ${tpl.html}`) : [];
 
-  const ready = form.name && form.templateId && rig && leadCount > 0;
+  const ready = form.name && form.templateId && sender && leadCount > 0;
 
   const testFire = async () => {
-    if (!testTo || !tpl || !rig) return;
+    if (!testTo || !tpl || !sender) return;
     setMsg(null);
     try {
       const d = await api("/api/send-test", {
         method: "POST",
         body: JSON.stringify({
-          profileId: rig.id, to: testTo,
+          profileId: sender.id, to: testTo,
           subject, html: tpl.html, text: tpl.text,
         }),
       });
-      setMsg(d.ok ? `test landed at ${testTo} — ${d.response ?? "accepted"}` : `test fumbled: ${d.error}`);
+      setMsg(d.ok ? `test sent at ${testTo} — ${d.response ?? "accepted"}` : `test failed: ${d.error}`);
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "test fumbled");
+      setMsg(e instanceof Error ? e.message : "test failed");
     }
   };
 
@@ -84,19 +84,19 @@ export default function NewCampaign() {
         const d = await api("/api/lists", {
           method: "POST",
           body: JSON.stringify({
-            name: `${form.name || "blast"} — pasted`,
-            description: "ad-hoc paste pack",
+            name: `${form.name || "campaign"} — pasted`,
+            description: "ad-hoc paste list",
           }),
         });
         listId = d.list.id;
         const r = await importRows(listId, pastedRows, () => {});
-        if (!r.added) throw new Error("pasted leads all duped/fumbled — nothing to hit");
+        if (!r.added) throw new Error("pasted contacts all duped/failed — nothing to hit");
       }
       const d = await api("/api/campaigns", {
         method: "POST",
         body: JSON.stringify({
           name: form.name,
-          profileId: rig!.id,
+          profileId: sender!.id,
           listId,
           templateId: form.templateId,
           subject: form.subject || undefined,
@@ -116,16 +116,16 @@ export default function NewCampaign() {
 
   return (
     <div>
-      <PageHead title="New blast" sub="rig → leads → letter → fire">
+      <PageHead title="New campaign" sub="sender → contacts → template → send">
         <Link href="/app/campaigns" className="self-center text-sm text-zinc-500 hover:text-zinc-300">
-          ← blasts
+          ← campaigns
         </Link>
       </PageHead>
       <Err msg={msg} />
 
       <Card className="mb-4">
         <Inp
-          label="blast name"
+          label="campaign name"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           placeholder="e.g. october push — cold list"
@@ -133,14 +133,14 @@ export default function NewCampaign() {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* 01 — rig */}
+        {/* 01 — sender */}
         <Card>
           <h3 className="mb-2 border-b border-zinc-800 pb-1 text-xs uppercase tracking-wider text-zinc-500">
-            01 · rig
+            01 · sender
           </h3>
           <Sel
-            label="smtp rig"
-            value={rig?.id ?? ""}
+            label="smtp sender"
+            value={sender?.id ?? ""}
             onChange={(e) => setForm({ ...form, profileId: e.target.value })}
           >
             <option value="">— pick —</option>
@@ -150,40 +150,40 @@ export default function NewCampaign() {
               </option>
             ))}
           </Sel>
-          {rig && (
+          {sender && (
             <div className="mt-2 px-0">
-              <KV k="host" v={`${rig.host}:${rig.port} (${rig.encryption})`} />
-              <KV k="login" v={rig.user} />
-              <KV k="from" v={rig.fromName ? `"${rig.fromName}" <${rig.fromEmail}>` : rig.fromEmail} />
-              <KV k="reply-to" v={rig.replyTo} />
-              <KV k="rate" v={`${rig.rateLimit}/min`} />
-              <KV k="bounce eye" v={rig.imapHost ? `${rig.imapHost}:${rig.imapPort}` : "off"} />
+              <KV k="host" v={`${sender.host}:${sender.port} (${sender.encryption})`} />
+              <KV k="login" v={sender.user} />
+              <KV k="from" v={sender.fromName ? `"${sender.fromName}" <${sender.fromEmail}>` : sender.fromEmail} />
+              <KV k="reply-to" v={sender.replyTo} />
+              <KV k="rate" v={`${sender.rateLimit}/min`} />
+              <KV k="bounce scan" v={sender.imapHost ? `${sender.imapHost}:${sender.imapPort}` : "off"} />
             </div>
           )}
         </Card>
 
-        {/* 02 — leads */}
+        {/* 02 — contacts */}
         <Card>
           <h3 className="mb-2 border-b border-zinc-800 pb-1 text-xs uppercase tracking-wider text-zinc-500">
-            02 · leads
+            02 · contacts
           </h3>
           <div className="mb-2 flex gap-2">
-            <Btn onClick={() => setLeadSrc("pack")}>{leadSrc === "pack" ? "• pack •" : "pack"}</Btn>
+            <Btn onClick={() => setLeadSrc("list")}>{leadSrc === "list" ? "• list •" : "list"}</Btn>
             <Btn onClick={() => setLeadSrc("paste")}>{leadSrc === "paste" ? "• paste •" : "paste"}</Btn>
           </div>
-          {leadSrc === "pack" ? (
+          {leadSrc === "list" ? (
             <>
               <Sel value={form.listId} onChange={(e) => setForm({ ...form, listId: e.target.value })}>
-                <option value="">— pick a pack —</option>
+                <option value="">— pick a list —</option>
                 {lists.data?.lists.map((l) => (
-                  <option key={l.id} value={l.id}>{l.name} ({l.count} leads)</option>
+                  <option key={l.id} value={l.id}>{l.name} ({l.count} contacts)</option>
                 ))}
               </Sel>
-              {pack && (
+              {list && (
                 <div className="mt-2 px-0">
-                  <KV k="pack" v={pack.name} />
-                  <KV k="leads" v={pack.count} />
-                  <KV k="about" v={pack.description} />
+                  <KV k="list" v={list.name} />
+                  <KV k="contacts" v={list.count} />
+                  <KV k="about" v={list.description} />
                 </div>
               )}
             </>
@@ -198,19 +198,19 @@ export default function NewCampaign() {
                 className="w-full border border-zinc-800 bg-black px-3 py-2 font-mono text-xs text-zinc-300 placeholder:text-zinc-700 focus:border-zinc-500 focus:outline-none"
               />
               <p className="mt-1 text-[11px] text-zinc-600">
-                {pastedRows.length} leads parsed — saves as pack '{form.name || "blast"} — pasted'
+                {pastedRows.length} contacts parsed — saves as list '{form.name || "campaign"} — pasted'
               </p>
             </>
           )}
         </Card>
 
-        {/* 03 — letter */}
+        {/* 03 — template */}
         <Card>
           <h3 className="mb-2 border-b border-zinc-800 pb-1 text-xs uppercase tracking-wider text-zinc-500">
-            03 · letter
+            03 · template
           </h3>
           <Sel
-            label="letter"
+            label="template"
             value={form.templateId}
             onChange={(e) => setForm({ ...form, templateId: e.target.value })}
           >
@@ -223,14 +223,14 @@ export default function NewCampaign() {
             <>
               <Inp
                 className="mt-2"
-                label="subject override (blank = letter's own)"
+                label="subject override (blank = template's own)"
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
                 placeholder={tpl.subject}
               />
               <div className="mt-2 px-0">
                 <KV k="spam score" v={
-                  report ? `${report.score}/100 — ${report.grade === "clean" ? "inbox-bound" : report.grade === "meh" ? "sketchy" : "spam-bound"}` : "—"
+                  report ? `${report.score}/100 — ${report.grade === "clean" ? "looks clean" : report.grade === "meh" ? "sketchy" : "spam-bound"}` : "—"
                 } />
                 <KV k="merges" v={tags.length ? tags.map((t) => `{{${t}}}`).join(" ") : "none"} />
                 <KV k="size" v={`${Math.round(new Blob([tpl.html]).size / 1024)}KB html`} />
@@ -252,7 +252,7 @@ export default function NewCampaign() {
                     </div>
                   ))}
                   {report.issues.length > 5 && (
-                    <div className="text-zinc-600">+{report.issues.length - 5} more — see compose</div>
+                    <div className="text-zinc-600">+{report.issues.length - 5} more — open the template to fix them</div>
                   )}
                 </div>
               )}
@@ -265,7 +265,7 @@ export default function NewCampaign() {
         </Card>
       </div>
 
-      {/* 04 — fire */}
+      {/* 04 — send */}
       <Card className="mt-4">
         <h3 className="mb-2 border-b border-zinc-800 pb-1 text-xs uppercase tracking-wider text-zinc-500">
           04 · send options
@@ -277,13 +277,13 @@ export default function NewCampaign() {
             inputMode="numeric"
             value={form.rateLimit}
             onChange={(e) => setForm({ ...form, rateLimit: e.target.value })}
-            placeholder={String(rig?.rateLimit ?? 60)}
+            placeholder={String(sender?.rateLimit ?? 60)}
           />
           <Inp
             label="from-name override"
             value={form.fromName}
             onChange={(e) => setForm({ ...form, fromName: e.target.value })}
-            placeholder={rig?.fromName || "rig's own"}
+            placeholder={sender?.fromName || "sender's own"}
           />
           <Inp
             label="reply-to override"
@@ -291,7 +291,7 @@ export default function NewCampaign() {
             inputMode="email"
             value={form.replyTo}
             onChange={(e) => setForm({ ...form, replyTo: e.target.value })}
-            placeholder={rig?.replyTo || "rig's own"}
+            placeholder={sender?.replyTo || "sender's own"}
           />
           <Inp
             label="drop it later"
@@ -302,11 +302,11 @@ export default function NewCampaign() {
         </div>
 
         <div className="mt-3 px-0">
-          <KV k="targets" v={leadCount ? `${leadCount} leads` : null} />
+          <KV k="targets" v={leadCount ? `${leadCount} contacts` : null} />
           <KV k="pace" v={`${effRate}/min`} />
           <KV k="eta" v={eta} />
           <KV k="unsub" v="auto footer + List-Unsubscribe headers" />
-          <KV k="ghosted" v="suppressed leads auto-skipped" />
+          <KV k="suppressed" v="suppressed contacts auto-skipped" />
         </div>
 
         <div className="mt-3 flex flex-wrap items-end gap-2">
@@ -319,19 +319,19 @@ export default function NewCampaign() {
             placeholder="you@yourmail.com"
             className="w-56"
           />
-          <Btn disabled={!testTo || !tpl || !rig} onClick={testFire}>[ send test ]</Btn>
+          <Btn disabled={!testTo || !tpl || !sender} onClick={testFire}>[ send test ]</Btn>
         </div>
 
         <div className="mt-4 flex gap-2 border-t border-zinc-800 pt-3">
           <Btn variant="primary" disabled={busy || !ready} onClick={() => create(!form.scheduledAt)}>
-            {form.scheduledAt ? "[ schedule the drop ]" : "[ blast now ]"}
+            {form.scheduledAt ? "[ schedule send ]" : "[ send now ]"}
           </Btn>
           {!form.scheduledAt && (
-            <Btn disabled={busy || !ready} onClick={() => create(false)}>[ stash as draft ]</Btn>
+            <Btn disabled={busy || !ready} onClick={() => create(false)}>[ save as draft ]</Btn>
           )}
           {!ready && (
             <span className="self-center text-[11px] text-zinc-600">
-              needs: name{!rig && " + rig"}{!form.templateId && " + letter"}{!leadCount && " + leads"}
+              needs: name{!sender && " + sender"}{!form.templateId && " + template"}{!leadCount && " + contacts"}
             </span>
           )}
         </div>

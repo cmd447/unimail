@@ -31,7 +31,7 @@ export function SpamRadar({
       }
     >
       <div className="mb-3 flex items-center gap-3">
-        <h3 className="text-sm font-medium text-zinc-300">spam radar</h3>
+        <h3 className="text-sm font-medium text-zinc-300">spam check</h3>
         <span
           className={`font-mono text-lg font-bold ${
             report.grade === "spammy"
@@ -45,9 +45,9 @@ export function SpamRadar({
         </span>
         <span className="text-xs uppercase text-zinc-500">
           {report.grade === "clean"
-            ? "inbox-bound"
+            ? "looks clean"
             : report.grade === "meh"
-              ? "sketchy — fix the flags"
+              ? "risky — fix the flags"
               : "spam folder bound"}
         </span>
         {onApply && fixable.length > 0 && (
