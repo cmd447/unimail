@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { api, useFetch } from "@/components/web/api";
-import { Btn, Card, Err, Inp, PageHead, Sel } from "@/components/web/ui";
+import { Btn, Card, Inp, Note, PageHead, Sel } from "@/components/web/ui";
 
 import { htmlToText } from "@/lib/render";
 
@@ -14,7 +14,7 @@ export default function Compose() {
   const [draft, setDraft] = useState({ subject: "", html: "", text: "" });
   const [tab, setTab] = useState<"edit" | "preview" | "text">("edit");
   const [testTo, setTestTo] = useState("");
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const areaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -44,9 +44,9 @@ export default function Compose() {
         method: "POST",
         body: JSON.stringify({ profileId: active.id, to: testTo, ...draft }),
       });
-      setMsg(d.ok ? `sent — ${d.response ?? "OK"}` : `failed: ${d.error}`);
+      setMsg(d.ok ? { text: `sent — ${d.response ?? "OK"}`, ok: true } : { text: `test failed: ${d.error}`, ok: false });
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Failed");
+      setMsg({ text: e instanceof Error ? e.message : "Failed", ok: false });
     } finally {
       setBusy(false);
     }
@@ -72,7 +72,7 @@ export default function Compose() {
         </Sel>
       </PageHead>
 
-      <Err msg={msg} />
+      <Note msg={msg} />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
         <div>
@@ -193,7 +193,7 @@ export default function Compose() {
                     method: "POST",
                     body: JSON.stringify({ name, ...draft, text: draft.text || htmlToText(draft.html) }),
                   });
-                  setMsg(`saved letter '${name}'`);
+                  setMsg({ text: `saved letter '${name}'`, ok: true });
                 }}
               >
                 save

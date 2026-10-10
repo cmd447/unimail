@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api, useFetch } from "@/components/web/api";
-import { Btn, Card, Err, Inp, PageHead, Sel } from "@/components/web/ui";
+import { Btn, Card, Inp, Note, PageHead, Sel } from "@/components/web/ui";
 import { importRows } from "@/components/web/importleads";
 import { parsePaste } from "@/lib/parseleads";
 import { extractTags } from "@/lib/render";
@@ -38,7 +38,7 @@ export default function NewCampaign() {
   const [leadSrc, setLeadSrc] = useState<"list" | "paste">("list");
   const [paste, setPaste] = useState("");
   const [testTo, setTestTo] = useState("");
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
 
   const sender =
@@ -69,9 +69,9 @@ export default function NewCampaign() {
           subject, html: tpl.html, text: tpl.text,
         }),
       });
-      setMsg(d.ok ? `test sent at ${testTo} — ${d.response ?? "accepted"}` : `test failed: ${d.error}`);
+      setMsg(d.ok ? { text: `test sent to ${testTo} — ${d.response ?? "accepted"}`, ok: true } : { text: `test failed: ${d.error}`, ok: false });
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "test failed");
+      setMsg({ text: e instanceof Error ? e.message : "test failed", ok: false });
     }
   };
 
@@ -109,7 +109,7 @@ export default function NewCampaign() {
       });
       router.push(`/app/campaigns/${d.campaign.id}`);
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Failed");
+      setMsg({ text: e instanceof Error ? e.message : "Failed", ok: false });
       setBusy(false);
     }
   };
@@ -121,7 +121,7 @@ export default function NewCampaign() {
           ← campaigns
         </Link>
       </PageHead>
-      <Err msg={msg} />
+      <Note msg={msg} />
 
       <Card className="mb-4">
         <Inp
