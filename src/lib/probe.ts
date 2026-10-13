@@ -77,13 +77,17 @@ export async function checkProbes(): Promise<{
   }
 
   const since = new Date(Date.now() - 48 * 3600 * 1000);
-  const pending = await db()
+  // single-field range only — placement==null filtered in code
+  const recent = await db()
     .collection("probes")
-    .where("placement", "==", null)
     .where("sentAt", ">=", since)
-    .limit(50)
+    .limit(100)
     .get();
-  if (pending.empty) return { checked: 0, placed: 0 };
+  const pdocs = recent.docs
+    .filter((d) => d.data().placement == null)
+    .slice(0, 50);
+  const pending = { docs: pdocs, size: pdocs.length };
+  if (!pending.size) return { checked: 0, placed: 0 };
 
   const client = new ImapFlow({
     host: s.seedImapHost,

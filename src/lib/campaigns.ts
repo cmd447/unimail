@@ -1,4 +1,4 @@
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldPath, FieldValue } from "firebase-admin/firestore";
 import { db } from "@/lib/firebase/admin";
 import type { Campaign, CampaignMessage, CampaignStatus } from "@/lib/types";
 
@@ -125,11 +125,12 @@ export async function campaignMessages(
   opts: { status?: string; limit?: number; after?: string },
 ): Promise<{ messages: CampaignMessage[]; next: string | null }> {
   const limit = Math.min(opts.limit ?? 100, 300);
+  // doc-id order avoids the composite index status+email would need
   let q: FirebaseFirestore.Query = db()
     .collection(COL)
     .doc(campaignId)
     .collection(MESSAGES)
-    .orderBy("email")
+    .orderBy(FieldPath.documentId())
     .limit(limit + 1);
   if (opts.status) q = q.where("status", "==", opts.status);
   if (opts.after) {
@@ -142,7 +143,9 @@ export async function campaignMessages(
     if (cur.exists) q = q.startAfter(cur);
   }
   const snap = await q.get();
-  const docs = snap.docs.slice(0, limit);
+  const docs = snap.docs
+    .slice(0, limit)
+    .sort((a, b) => String(a.data().email).localeCompare(String(b.data().email)));
   return {
     messages: docs.map((d) => {
       const m = d.data();

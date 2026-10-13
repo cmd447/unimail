@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldPath, FieldValue } from "firebase-admin/firestore";
 import { db } from "@/lib/firebase/admin";
 import { checkEmail } from "@/lib/validate";
 import type { Contact, MailList } from "@/lib/types";
@@ -77,9 +77,11 @@ export async function getContacts(opts: {
   after?: string; // doc id cursor
 }): Promise<{ contacts: Contact[]; next: string | null }> {
   const limit = Math.min(opts.limit ?? 100, 500);
+  // ordering by doc id rides the implicit index — array-contains or equality
+  // alongside orderBy("email") would demand a composite index we don't have
   let q: FirebaseFirestore.Query = db()
     .collection(CONTACTS)
-    .orderBy("email")
+    .orderBy(FieldPath.documentId())
     .limit(limit + 1);
   if (opts.listId) q = q.where("listIds", "array-contains", opts.listId);
   if (opts.after) {
@@ -87,7 +89,9 @@ export async function getContacts(opts: {
     if (cur.exists) q = q.startAfter(cur);
   }
   const snap = await q.get();
-  const docs = snap.docs.slice(0, limit);
+  const docs = snap.docs
+    .slice(0, limit)
+    .sort((a, b) => String(a.data().email).localeCompare(String(b.data().email)));
   return {
     contacts: docs.map((d) => toContact(d.id, d.data())),
     next: snap.docs.length > limit ? docs[docs.length - 1].id : null,
