@@ -28,6 +28,28 @@ async function logProbe(
   });
 }
 
+/** Read the receiver's own verdict off the message headers — the "why". */
+function parseAuthHeaders(raw: string) {
+  const pick = (h: string) =>
+    raw.match(new RegExp(`^${h}:[^\\n]*(?:\\n[ \\t][^\\n]*)*`, "im"))?.[0] ?? "";
+  const ar = pick("Authentication-Results") + "\n" + pick("Received-SPF");
+  const grade = (k: string) =>
+    ar.match(new RegExp(`(?:^|[;\\s])${k}=(\\w+)`, "i"))?.[1]?.toLowerCase() ?? null;
+  const dkimDomain =
+    ar.match(/dkim=\w+[^;]*?header\.i=@([\w.-]+)/i)?.[1] ??
+    ar.match(/dkim=(?:pass|ok)[^;]*?d=([\w.-]+)/i)?.[1] ??
+    null;
+  const returnPath = pick("Return-Path").match(/@([\w.-]+)>/i)?.[1] ?? null;
+  return {
+    spf: grade("spf") ?? grade("received-spf"),
+    dkim: grade("dkim"),
+    dkimDomain,
+    dmarc: grade("dmarc"),
+    iprev: grade("iprev"),
+    returnPath,
+  };
+}
+
 /** Fire the letter at the seed inbox and register a pending probe. */
 export async function sendProbe(opts: {
   profileId: string;
@@ -117,6 +139,7 @@ export async function checkProbes(): Promise<{
     for (const doc of pending.docs) {
       const p = doc.data();
       let hit: string | null = null;
+      let auth: ReturnType<typeof parseAuthHeaders> | null = null;
       for (const box of boxes) {
         const lock = await client.getMailboxLock(box);
         try {
@@ -127,6 +150,20 @@ export async function checkProbes(): Promise<{
             })) || [];
           if (uids.length) {
             hit = box;
+            // grab the auth verdict off the first match while we hold the lock
+            try {
+              let raw = "";
+              for await (const m of client.fetch(
+                String(uids[0]),
+                { headers: ["authentication-results", "received-spf", "return-path"] },
+                { uid: true },
+              )) {
+                raw += m.headers?.toString() ?? "";
+              }
+              if (raw) auth = parseAuthHeaders(raw);
+            } catch {
+              /* headers are a bonus — placement still counts */
+            }
             // mark seen so it doesn't keep showing as unread noise
             for (const uid of uids) await client.messageFlagsAdd(uid, ["\\Seen"]).catch(() => {});
             break;
@@ -138,16 +175,39 @@ export async function checkProbes(): Promise<{
 
       if (hit) {
         const placement = /^inbox$/i.test(hit) ? "inbox" : "spam";
-        await doc.ref.update({ placement, folder: hit });
+        await doc.ref.update({ placement, folder: hit, auth });
         placed++;
+        const verdict = auth
+          ? [
+              auth.spf && `spf=${auth.spf}`,
+              auth.dkim &&
+                `dkim=${auth.dkim}${auth.dkimDomain ? `(${auth.dkimDomain})` : ""}`,
+              auth.dmarc && `dmarc=${auth.dmarc}`,
+              auth.iprev && `ip=${auth.iprev}`,
+            ]
+              .filter(Boolean)
+              .join(" · ")
+          : "";
+        const why =
+          placement === "spam" && auth
+            ? auth.dmarc && auth.dmarc !== "pass"
+              ? " — dmarc fails: the signing domain ≠ your from domain"
+              : auth.spf && !["pass"].includes(auth.spf)
+                ? ` — spf ${auth.spf}: envelope domain isn't authorized`
+                : auth.dkim && auth.dkim !== "pass"
+                  ? " — dkim fails: signature broken or missing"
+                  : auth.spf === "pass" && auth.dkim === "pass" && auth.dmarc === "pass"
+                    ? " — all auth green: it's reputation/content, not auth"
+                    : ""
+            : "";
         await logProbe(
           p.campaignId ?? "",
           p.campaignName ?? "(probe)",
           s.seedEmail ?? "",
           "probe",
           placement === "inbox"
-            ? `✓ landed in INBOX (${hit})`
-            : `✗ landed in SPAM (${hit}) — letter is getting filtered`,
+            ? `✓ landed in INBOX (${hit})${verdict ? ` — ${verdict}` : ""}`
+            : `✗ landed in SPAM (${hit})${verdict ? ` — ${verdict}` : ""}${why}`,
         );
       }
     }
