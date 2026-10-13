@@ -99,6 +99,10 @@ export interface Campaign {
   rateLimit?: number | null;
   replyTo?: string | null;
   fromName?: string | null;
+  /** Wave size — send N then auto-pause for a manual "next wave". 0/null = run to end. */
+  batchSize?: number | null;
+  /** Sends in the current wave — reset when a wave pause fires or resumes */
+  batchSent?: number;
   status: CampaignStatus;
   counters: { total: number; sent: number; failed: number; skipped: number };
   error?: string | null;

@@ -47,7 +47,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
         return NextResponse.json({ error: `Cannot send from ${campaign.status}` }, { status: 409 });
       }
       if (!campaign.counters.total) await expandCampaign(id, campaign.listId);
-      await setCampaignStatus(id, "sending");
+      await setCampaignStatus(id, "sending", null);
       await kick();
       break;
     }
@@ -61,7 +61,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       if (campaign.status !== "paused") {
         return NextResponse.json({ error: "Not paused" }, { status: 409 });
       }
-      await setCampaignStatus(id, "sending");
+      await setCampaignStatus(id, "sending", null);
       await kick();
       break;
     }

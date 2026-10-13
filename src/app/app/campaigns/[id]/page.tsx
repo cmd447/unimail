@@ -112,7 +112,11 @@ export default function CampaignDetail() {
           <Btn variant="primary" onClick={() => act("send")}>send</Btn>
         )}
         {c.status === "sending" && <Btn onClick={() => act("pause")}>pause</Btn>}
-        {c.status === "paused" && <Btn variant="primary" onClick={() => act("resume")}>resume</Btn>}
+        {c.status === "paused" && (
+          <Btn variant="primary" onClick={() => act("resume")}>
+            {c.batchSize ? `[ send next ${Math.min(c.batchSize, k?.total ? k.total - (k.sent + k.failed + k.skipped) : c.batchSize)} ]` : "resume"}
+          </Btn>
+        )}
         {!["completed", "cancelled"].includes(c.status) && (
           <Btn variant="danger" onClick={() => confirm("call this blast off?") && act("cancel")}>
             cancel
@@ -126,7 +130,18 @@ export default function CampaignDetail() {
 
       <div className="mb-4 flex items-center gap-3">
         <Badge color={statusColor(c.status)}>{c.status}</Badge>
-        {c.error && <span className="text-xs text-red-400">{c.error}</span>}
+        {c.error && (
+          <span className={`text-xs ${c.status === "failed" ? "text-red-400" : "text-zinc-500"}`}>
+            {c.error}
+          </span>
+        )}
+        {c.batchSize > 0 && (
+          <span className="text-xs text-zinc-500">
+            waves of {c.batchSize}
+            {c.status === "sending" && c.batchSent != null &&
+              ` · this wave ${c.batchSent}/${c.batchSize}`}
+          </span>
+        )}
         {c.scheduledAt && (
           <span className="text-xs text-zinc-500">
             sends {new Date(c.scheduledAt).toLocaleString()}

@@ -97,6 +97,9 @@ export async function processBatch(campaignId: string) {
   }
 
   const suppressed = await suppressedSet(snap.docs.map((d) => d.data().email));
+  // wave cap — batchSize contacts per run, then auto-pause for a manual next wave
+  const waveCap = campaign.batchSize || Infinity;
+  let waveSent = campaign.batchSent ?? 0;
   const appUrl = process.env.APP_URL ?? "http://localhost:3000";
   const pace = Math.min(
     3000,
@@ -200,7 +203,11 @@ export async function processBatch(campaignId: string) {
           sentAt: FieldValue.serverTimestamp(),
           error: null,
         });
-        await cRef.update({ "counters.sent": FieldValue.increment(1) });
+        await cRef.update({
+          "counters.sent": FieldValue.increment(1),
+          batchSent: FieldValue.increment(1),
+        });
+        waveSent++;
         await logEvent(
           campaignId,
           campaign.name,
@@ -251,6 +258,7 @@ export async function processBatch(campaignId: string) {
       }
 
       if (pace) await sleep(pace);
+      if (waveSent >= waveCap) break; // wave boundary mid-batch — stop here
     }
   } finally {
     transport.close();
@@ -260,6 +268,14 @@ export async function processBatch(campaignId: string) {
   if (!remaining) {
     await setCampaignStatus(campaignId, "completed");
     return { active: false, remaining: 0, note: "completed" };
+  }
+  if (waveSent >= waveCap) {
+    await cRef.update({
+      status: "paused",
+      batchSent: 0,
+      error: `wave done — ${campaign.batchSize} sent · resume fires the next ${Math.min(campaign.batchSize!, remaining)}`,
+    });
+    return { active: false, remaining, note: "wave done" };
   }
   return { active: true, remaining, note: "batch done" };
 }

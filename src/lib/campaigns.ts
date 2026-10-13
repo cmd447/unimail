@@ -21,6 +21,8 @@ function toCampaign(id: string, d: FirebaseFirestore.DocumentData): Campaign {
     rateLimit: d.rateLimit ?? null,
     replyTo: d.replyTo ?? null,
     fromName: d.fromName ?? null,
+    batchSize: d.batchSize ?? null,
+    batchSent: d.batchSent ?? 0,
     scheduledAt: d.scheduledAt?.toDate?.().toISOString() ?? null,
     createdAt: d.createdAt?.toDate?.().toISOString() ?? null,
     completedAt: d.completedAt?.toDate?.().toISOString() ?? null,
@@ -48,6 +50,7 @@ export async function createCampaign(input: {
   rateLimit?: number | null;
   replyTo?: string | null;
   fromName?: string | null;
+  batchSize?: number | null;
   scheduledAt?: Date | null;
 }): Promise<Campaign> {
   const ref = db().collection(COL).doc();
@@ -55,6 +58,7 @@ export async function createCampaign(input: {
   await ref.set({
     ...input,
     status,
+    batchSent: 0,
     counters: { total: 0, sent: 0, failed: 0, skipped: 0 },
     createdAt: FieldValue.serverTimestamp(),
   });
@@ -110,7 +114,7 @@ export async function expandCampaign(campaignId: string, listId: string) {
   return total;
 }
 
-export async function setCampaignStatus(id: string, status: CampaignStatus, error?: string) {
+export async function setCampaignStatus(id: string, status: CampaignStatus, error?: string | null) {
   await db().collection(COL).doc(id).update({
     status,
     ...(status === "completed" || status === "failed" || status === "cancelled"

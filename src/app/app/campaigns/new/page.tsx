@@ -34,6 +34,7 @@ export default function NewCampaign() {
   const [form, setForm] = useState({
     name: "", profileId: "", listId: "", templateId: "",
     subject: "", rateLimit: "", replyTo: "", fromName: "", scheduledAt: "",
+    batchSize: "",
   });
   const [leadSrc, setLeadSrc] = useState<"list" | "paste">("list");
   const [paste, setPaste] = useState("");
@@ -101,6 +102,7 @@ export default function NewCampaign() {
           templateId: form.templateId,
           subject: form.subject || undefined,
           rateLimit: form.rateLimit ? parseInt(form.rateLimit, 10) : undefined,
+          batchSize: form.batchSize ? parseInt(form.batchSize, 10) : undefined,
           replyTo: form.replyTo || undefined,
           fromName: form.fromName || undefined,
           sendNow,
@@ -270,7 +272,7 @@ export default function NewCampaign() {
         <h3 className="mb-2 border-b border-zinc-800 pb-1 text-xs uppercase tracking-wider text-zinc-500">
           04 · send options
         </h3>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Inp
             label="send speed /min"
             type="number"
@@ -278,6 +280,14 @@ export default function NewCampaign() {
             value={form.rateLimit}
             onChange={(e) => setForm({ ...form, rateLimit: e.target.value })}
             placeholder={String(sender?.rateLimit ?? 60)}
+          />
+          <Inp
+            label="send in waves of (blank = all at once)"
+            type="number"
+            inputMode="numeric"
+            value={form.batchSize}
+            onChange={(e) => setForm({ ...form, batchSize: e.target.value })}
+            placeholder="e.g. 50"
           />
           <Inp
             label="from-name override"
@@ -305,6 +315,14 @@ export default function NewCampaign() {
           <KV k="targets" v={leadCount ? `${leadCount} contacts` : null} />
           <KV k="pace" v={`${effRate}/min`} />
           <KV k="eta" v={eta} />
+          <KV
+            k="waves"
+            v={
+              form.batchSize && leadCount
+                ? `${Math.min(parseInt(form.batchSize, 10) || 0, leadCount)} now — then ${Math.max(0, Math.ceil(leadCount / (parseInt(form.batchSize, 10) || leadCount)) - 1)} more on click`
+                : "all at once"
+            }
+          />
           <KV k="unsub" v="auto footer + List-Unsubscribe headers" />
           <KV k="suppressed" v="suppressed contacts auto-skipped" />
         </div>
