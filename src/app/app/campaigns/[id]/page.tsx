@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { api, useFetch } from "@/components/web/api";
-import { Badge, Btn, Card, Note, PageHead, Sel, Tbl, statusColor } from "@/components/web/ui";
+import { Area, Badge, Btn, Card, Inp, Note, PageHead, Sel, Tbl, statusColor } from "@/components/web/ui";
 import { LogFeed } from "@/components/web/logfeed";
+import { mergeData, renderMerge } from "@/lib/render";
 
 export default function CampaignDetail() {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +21,9 @@ export default function CampaignDetail() {
   const [next, setNext] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [preview, setPreview] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ subject: "", html: "", text: "" });
   const c = data?.campaign;
 
   const loadMsgs = useCallback(
@@ -95,9 +99,38 @@ export default function CampaignDetail() {
     }
   };
 
+  const saveEdit = async () => {
+    setMsg(null);
+    try {
+      await api(`/api/campaigns/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ action: "edit", ...draft }),
+      });
+      setEditing(false);
+      setMsg({ text: "letter updated — queued contacts get the new copy", ok: true });
+      reload();
+    } catch (e) {
+      setMsg({ text: e instanceof Error ? e.message : "Failed", ok: false });
+    }
+  };
+
   if (!c) return <p className="text-sm text-zinc-600">loading…</p>;
   const k = c.counters;
   const done = k.sent + k.failed + k.skipped;
+  const editable = !["completed", "cancelled"].includes(c.status);
+
+  // preview merges like a real send — first queued contact, else a demo lead
+  const sample = queued?.messages?.[0] ?? {
+    email: "jane.doe@example.com",
+    firstName: "Jane",
+    lastName: "Doe",
+    fields: {},
+  };
+  const merge = { ...mergeData(sample), unsubscribe_url: "#unsub" };
+  const prevHtml = /\{\{\s*unsubscribe_url\s*\}\}/.test(c.html)
+    ? renderMerge(c.html, merge)
+    : renderMerge(c.html, merge) +
+      `<div style="margin-top:32px;padding-top:12px;border-top:1px solid #e5e5e5;font-size:11px;color:#888">Don't want these emails? <a href="#unsub">Unsubscribe</a></div>`;
 
   return (
     <div>
@@ -106,6 +139,17 @@ export default function CampaignDetail() {
           ← all sends
         </Link>
         <Btn onClick={() => { reload(); loadMsgs(); reloadLogs(); reloadQueued(); }}>refresh</Btn>
+        <Btn onClick={() => setPreview(true)}>[ preview ]</Btn>
+        {editable && (
+          <Btn
+            onClick={() => {
+              setDraft({ subject: c.subject, html: c.html, text: c.text });
+              setEditing((e) => !e);
+            }}
+          >
+            [ edit letter ]
+          </Btn>
+        )}
         <Btn onClick={probe}>[ test placement ]</Btn>
         <Btn onClick={checkProbes}>[ check placement ]</Btn>
         {["draft", "scheduled", "failed"].includes(c.status) && (
@@ -163,6 +207,67 @@ export default function CampaignDetail() {
           </Card>
         ))}
       </div>
+
+      {editing && (
+        <Card className="mb-6">
+          <h2 className="mb-1 text-sm font-medium text-zinc-300">edit the letter</h2>
+          <p className="mb-3 text-xs text-zinc-500">
+            {["sending", "paused"].includes(c.status)
+              ? "applies to contacts still queued — already-sent copies are gone"
+              : "edits the copy this blast sends"}
+          </p>
+          <div className="space-y-3">
+            <Inp
+              label="subject"
+              value={draft.subject}
+              onChange={(e) => setDraft({ ...draft, subject: e.target.value })}
+            />
+            <Area
+              label="html"
+              rows={10}
+              value={draft.html}
+              onChange={(e) => setDraft({ ...draft, html: e.target.value })}
+            />
+            <Area
+              label="plain text"
+              rows={5}
+              value={draft.text}
+              onChange={(e) => setDraft({ ...draft, text: e.target.value })}
+            />
+            <div className="flex gap-2">
+              <Btn variant="primary" onClick={saveEdit}>[ save letter ]</Btn>
+              <Btn onClick={() => setEditing(false)}>cancel</Btn>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 overflow-auto bg-black/90 p-4"
+          onClick={() => setPreview(false)}
+        >
+          <div
+            className="mx-auto max-w-2xl border border-zinc-700 bg-zinc-950"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
+              <div className="text-xs text-zinc-500">
+                preview — {sample.email}
+                {queued?.messages?.[0] ? " (real contact)" : " (demo contact)"}
+              </div>
+              <Btn onClick={() => setPreview(false)}>close</Btn>
+            </div>
+            <div className="border-b border-zinc-800 px-4 py-2 text-xs text-zinc-500">
+              <div><span className="text-zinc-600">subject:</span> <span className="text-zinc-300">{renderMerge(c.subject, merge)}</span></div>
+            </div>
+            <div
+              className="bg-white p-4 text-sm text-black"
+              dangerouslySetInnerHTML={{ __html: prevHtml }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="mb-6">
         <h2 className="mb-2 text-sm font-medium text-zinc-300">

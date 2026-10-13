@@ -114,6 +114,17 @@ export async function expandCampaign(campaignId: string, listId: string) {
   return total;
 }
 
+export async function updateCampaignContent(
+  id: string,
+  content: { subject: string; html: string; text: string },
+) {
+  await db().collection(COL).doc(id).update({
+    subject: content.subject,
+    html: content.html,
+    text: content.text,
+  });
+}
+
 export async function setCampaignStatus(id: string, status: CampaignStatus, error?: string | null) {
   await db().collection(COL).doc(id).update({
     status,

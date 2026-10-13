@@ -6,6 +6,7 @@ import {
   getCampaign,
   remainingQueued,
   setCampaignStatus,
+  updateCampaignContent,
 } from "@/lib/campaigns";
 import { expandCampaign } from "@/lib/campaigns";
 import { dispatchCloud, dispatchLocal, queueEnabled } from "@/lib/queue";
@@ -21,7 +22,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   return NextResponse.json({ campaign });
 }
 
-const ACTIONS = ["send", "pause", "resume", "cancel"] as const;
+const ACTIONS = ["send", "pause", "resume", "cancel", "edit"] as const;
 type Action = (typeof ACTIONS)[number];
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
@@ -31,7 +32,13 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   const campaign = await getCampaign(id);
   if (!campaign) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const { action } = (await req.json().catch(() => ({}))) as { action?: Action };
+  const body = (await req.json().catch(() => ({}))) as {
+    action?: Action;
+    subject?: string;
+    html?: string;
+    text?: string;
+  };
+  const { action } = body;
   if (!action || !ACTIONS.includes(action)) {
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   }
@@ -71,6 +78,23 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       }
       await setCampaignStatus(id, "cancelled");
       break;
+    case "edit": {
+      if (["completed", "cancelled"].includes(campaign.status)) {
+        return NextResponse.json({ error: "Blast already finished" }, { status: 409 });
+      }
+      const subject = String(body.subject ?? "").trim();
+      const html = String(body.html ?? "");
+      if (!subject || !html.trim()) {
+        return NextResponse.json({ error: "need subject + html" }, { status: 400 });
+      }
+      // only queued contacts pick this up — already-sent copies are gone
+      await updateCampaignContent(id, {
+        subject,
+        html,
+        text: String(body.text ?? ""),
+      });
+      break;
+    }
   }
 
   return NextResponse.json({ campaign: await getCampaign(id) });

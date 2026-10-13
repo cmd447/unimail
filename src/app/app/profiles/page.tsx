@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { api, useFetch } from "@/components/web/api";
 import { Badge, Btn, Card, Inp, Note, PageHead, Sel, Tbl } from "@/components/web/ui";
 
@@ -16,6 +16,20 @@ export default function Profiles() {
   const [form, setForm] = useState<any>(EMPTY);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [checks, setChecks] = useState<Record<string, any[] | "loading">>({});
+
+  const check = async (id: string) => {
+    setChecks((c) => ({ ...c, [id]: "loading" }));
+    try {
+      const d = await api(`/api/profiles/${id}/check`, { method: "POST" });
+      setChecks((c) => ({ ...c, [id]: d.checks ?? [{ label: "?", state: "fail", detail: d.error ?? "check failed" }] }));
+    } catch (e) {
+      setChecks((c) => ({
+        ...c,
+        [id]: [{ label: "check", state: "fail", detail: e instanceof Error ? e.message : "failed" }],
+      }));
+    }
+  };
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
@@ -100,7 +114,8 @@ export default function Profiles() {
 
       <Tbl head={["Sender", "Server", "From", "Status", ""]}>
         {(data?.profiles ?? []).map((p) => (
-          <tr key={p.id} className="text-zinc-300">
+          <Fragment key={p.id}>
+          <tr className="text-zinc-300">
             <td className="px-3 py-2 font-medium">
               {p.name}
               {p.isDefault && <Badge color="blue"> default</Badge>}
@@ -138,6 +153,7 @@ export default function Profiles() {
                 >
                   verify
                 </Btn>
+                <Btn onClick={() => check(p.id)}>spam check</Btn>
                 {!p.isDefault && (
                   <Btn onClick={() => act(() => api(`/api/profiles/${p.id}`, { method: "PATCH", body: JSON.stringify({ isDefault: true }) }))}>
                     set default
@@ -163,6 +179,38 @@ export default function Profiles() {
               </div>
             </td>
           </tr>
+          {checks[p.id] && (
+            <tr key={`${p.id}-checks`} className="border-b border-zinc-900">
+              <td colSpan={5} className="px-3 py-2">
+                {checks[p.id] === "loading" ? (
+                  <span className="text-xs text-zinc-600">checking dns + auth…</span>
+                ) : (
+                  <div className="space-y-1">
+                    {(checks[p.id] as any[]).map((ch: any, i: number) => (
+                      <div key={i} className="flex gap-2 text-[11px]">
+                        <span
+                          className={
+                            ch.state === "ok"
+                              ? "text-emerald-400"
+                              : ch.state === "warn"
+                                ? "text-amber-400"
+                                : ch.state === "fail"
+                                  ? "text-red-400"
+                                  : "text-zinc-500"
+                          }
+                        >
+                          [{ch.state}]
+                        </span>
+                        <span className="w-16 shrink-0 uppercase text-zinc-600">{ch.label}</span>
+                        <span className="text-zinc-400">{ch.detail}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </td>
+            </tr>
+          )}
+        </Fragment>
         ))}
         {!data?.profiles?.length && (
           <tr>
