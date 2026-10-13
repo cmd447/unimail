@@ -167,13 +167,20 @@ const stripInteractive = (html: string) =>
     .replace(/<(input|embed|source|track)\b[^>]*\/?>/gi, "")
     .replace(/<\/?(form|select|option|button|textarea)\b[^>]*>/gi, "");
 
+// an element whose style hides it goes out entirely — stray decls get stripped
 const stripHidden = (html: string) =>
   html
+    .replace(
+      /<(div|span|p|td)[^>]*?style\s*=\s*["'][^"']*?(?:display\s*:\s*none|visibility\s*:\s*hidden|font-size\s*:\s*(?:0|1px)|opacity\s*:\s*0|mso-hide\s*:\s*all|max-height\s*:\s*0|max-width\s*:\s*0)[^"']*["'][^>]*>[\s\S]*?<\/\1>/gi,
+      "",
+    )
     .replace(/display\s*:\s*none\s*;?/gi, "")
     .replace(/visibility\s*:\s*hidden\s*;?/gi, "")
-    .replace(/font-size\s*:\s*0(px|pt|em)?\s*;?/gi, "")
+    .replace(/font-size\s*:\s*(0|1px)\s*;?/gi, "")
     .replace(/opacity\s*:\s*0(\.0+)?\s*;?/gi, "")
-    .replace(/mso-hide\s*:\s*all\s*;?/gi, "");
+    .replace(/mso-hide\s*:\s*all\s*;?/gi, "")
+    .replace(/max-height\s*:\s*0\s*;?/gi, "")
+    .replace(/max-width\s*:\s*0\s*;?/gi, "");
 
 const upgradeLinks = (html: string) =>
   html.replace(/(href\s*=\s*["'])http:\/\//gi, "$1https://");
@@ -298,10 +305,10 @@ export function spamReport(subject: string, html: string, text: string): SpamRep
       "strip the tags", (d) => ({ ...d, html: stripInteractive(d.html) }));
   }
 
-  const hiddenText = /(display\s*:\s*none|visibility\s*:\s*hidden|font-size\s*:\s*0|opacity\s*:\s*0|mso-hide\s*:\s*all|color\s*:\s*(#fff(fff)?|white)\s*[;"].*background)/i.test(html);
+  const hiddenText = /(display\s*:\s*none|visibility\s*:\s*hidden|font-size\s*:\s*(0|1px)|opacity\s*:\s*0|mso-hide\s*:\s*all|max-height\s*:\s*0|max-width\s*:\s*0|color\s*:\s*(#fff(fff)?|white)\s*[;"].*background)/i.test(html);
   if (hiddenText) {
-    add("hidden-text", "critical", "Hidden text detected", "Invisible keyword-stuffing is one of the oldest spam tricks — filters pattern-match it. Remove it entirely.",
-      "strip hidden styles", (d) => ({ ...d, html: stripHidden(d.html) }));
+    add("hidden-text", "critical", "Hidden text detected", "Invisible keyword-stuffing (incl. ghost preheaders) is one of the oldest spam tricks — filters pattern-match it. Remove it entirely.",
+      "remove hidden elements", (d) => ({ ...d, html: stripHidden(d.html) }));
   }
 
   const imgCount = (cleanHtml.match(/<img\b/gi) ?? []).length;
