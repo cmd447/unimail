@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { api, useFetch } from "@/components/web/api";
-import { Badge, Btn, Card, Err, Inp, PageHead, Tbl } from "@/components/web/ui";
+import { Badge, Btn, Card, Inp, Note, PageHead, Tbl } from "@/components/web/ui";
 
 export default function Settings() {
   const { data, reload } = useFetch<{ settings: any }>("/api/settings");
@@ -13,24 +13,25 @@ export default function Settings() {
     email: "", host: "", port: "993", user: "", pass: "",
   });
   const [ai, setAi] = useState({ key: "", base: "", model: "" });
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const s = data?.settings;
 
   const run = async (fn: () => Promise<any>) => {
     setMsg(null);
     try {
       await fn();
+      setMsg({ text: "saved.", ok: true });
       reload();
       supp.reload();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Failed");
+      setMsg({ text: e instanceof Error ? e.message : "Failed", ok: false });
     }
   };
 
   return (
     <div className="max-w-2xl">
       <PageHead title="Settings" sub="caps, seed inbox, suppressions" />
-      <Err msg={msg} />
+      <Note msg={msg} />
  
       <Card className="mb-4">
         <div className="flex items-center justify-between">

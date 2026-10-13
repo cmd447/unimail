@@ -2,8 +2,9 @@
 
 import { useMemo, useRef, useState } from "react";
 import Papa from "papaparse";
+import Link from "next/link";
 import { api, useFetch } from "@/components/web/api";
-import { Btn, Err, Inp } from "@/components/web/ui";
+import { Btn, Inp, Note } from "@/components/web/ui";
 import { parsePaste, rowsFromCsv, type LeadRow } from "@/lib/parseleads";
 import { nameFromEmail } from "@/lib/render";
 
@@ -50,24 +51,30 @@ export function ImportLeads({
   const [one, setOne] = useState("");
   const [aiRows, setAiRows] = useState<LeadRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [added, setAdded] = useState<LeadRow[] | null>(null);
 
   // local parse is instant; ai rows (when run) take over the preview
   const localRows = useMemo(() => parsePaste(paste), [paste]);
   const rows = aiRows ?? localRows;
 
   const run = async (rs: LeadRow[]) => {
-    if (!rs.length) return setMsg("no valid emails found in that");
+    if (!rs.length)
+      return setMsg({ text: "no valid emails found in that", ok: false });
     setMsg(null);
     try {
       const r = await importRows(listId, rs, setBusy);
-      setMsg(`${r.added} added · ${r.skipped} already in · ${r.invalid} invalid`);
+      setMsg({
+        text: `${r.added} added · ${r.skipped} already in · ${r.invalid} invalid`,
+        ok: true,
+      });
+      setAdded(r.added || r.skipped ? rs : null);
       setPaste("");
       setOne("");
       setAiRows(null);
       onDone();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "import failed");
+      setMsg({ text: e instanceof Error ? e.message : "import failed", ok: false });
     } finally {
       setBusy(null);
     }
@@ -84,9 +91,10 @@ export function ImportLeads({
       });
       if (!d.ok) throw new Error(d.error);
       setAiRows(d.rows.map((r: any) => ({ ...r, fields: {} })));
-      if (!d.rows.length) setMsg("ai found no emails in that");
+      if (!d.rows.length)
+        setMsg({ text: "ai found no emails in that", ok: false });
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "ai failed");
+      setMsg({ text: e instanceof Error ? e.message : "ai failed", ok: false });
     } finally {
       setBusy(null);
     }
@@ -100,7 +108,8 @@ export function ImportLeads({
   }, [one]);
 
   const addOne = () => {
-    if (!oneParsed) return setMsg("that email doesn't look right");
+    if (!oneParsed)
+      return setMsg({ text: "that email doesn't look right", ok: false });
     run([{ ...oneParsed, fields: {} }]);
   };
 
@@ -115,7 +124,7 @@ export function ImportLeads({
 
   return (
     <div className="space-y-3">
-      <Err msg={msg} />
+      <Note msg={msg} />
       {busy && <p className="text-sm text-zinc-400">{busy}</p>}
 
       <div className="flex items-end gap-2">
@@ -211,6 +220,41 @@ export function ImportLeads({
           }}
         />
       </div>
+
+      {added && added.length > 0 && (
+        <div className="border-l-2 border-emerald-900/60 pl-3">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-wider text-zinc-500">
+              just added
+            </span>
+            <Link
+              href={`/app/lists/${listId}`}
+              className="text-[10px] text-zinc-500 hover:text-zinc-300"
+            >
+              view all →
+            </Link>
+          </div>
+          <div className="grid gap-x-6 sm:grid-cols-2">
+            {added.slice(0, 30).map((r, i) => {
+              const n = displayName(r);
+              return (
+                <div key={i} className="flex justify-between gap-3 text-[11px] leading-relaxed">
+                  <span className="truncate text-zinc-300">{r.email}</span>
+                  <span className="truncate text-zinc-600">{n.name}</span>
+                </div>
+              );
+            })}
+          </div>
+          {added.length > 30 && (
+            <div className="mt-1 text-[11px] text-zinc-600">
+              +{added.length - 30} more —{" "}
+              <Link href={`/app/lists/${listId}`} className="hover:text-zinc-300">
+                see the whole list
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

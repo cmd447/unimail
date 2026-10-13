@@ -5,14 +5,14 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/components/web/api";
 import { ImportLeads } from "@/components/web/importleads";
-import { Badge, Btn, Card, Err, PageHead, Tbl } from "@/components/web/ui";
+import { Badge, Btn, Card, Note, PageHead, Tbl } from "@/components/web/ui";
 
 export default function ListDetail() {
   const { id } = useParams<{ id: string }>();
   const [contacts, setContacts] = useState<any[]>([]);
   const [next, setNext] = useState<string | null>(null);
   const [list, setList] = useState<any | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [importing, setImporting] = useState<string | null>(null);
 
   const load = useCallback(async (after?: string) => {
@@ -52,9 +52,12 @@ export default function ListDetail() {
               const src = Object.entries(d.bySource ?? {})
                 .map(([k, v]) => `${v} via ${k}`)
                 .join(", ");
-              setMsg(`checked ${d.checked} nameless contacts — ${d.resolved} real names found${src ? ` (${src})` : ""}`);
+              setMsg({
+                text: `checked ${d.checked} nameless contacts — ${d.resolved} real names found${src ? ` (${src})` : ""}`,
+                ok: true,
+              });
             } catch (e) {
-              setMsg(e instanceof Error ? e.message : "Failed");
+              setMsg({ text: e instanceof Error ? e.message : "Failed", ok: false });
             } finally {
               setImporting(null);
             }
@@ -68,7 +71,7 @@ export default function ListDetail() {
       {importing && (
         <Card className="mb-3"><p className="text-sm text-zinc-400">{importing}</p></Card>
       )}
-      <Err msg={msg} />
+      <Note msg={msg} />
 
       <Card className="mb-4">
         <ImportLeads listId={id} onDone={reload} />
