@@ -16,6 +16,7 @@ export default function Compose() {
   const [testTo, setTestTo] = useState("");
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [probes, setProbes] = useState<any[]>([]);
   const areaRef = useRef<HTMLTextAreaElement>(null);
 
   const active = pData?.profiles.find((p) => p.isActive) ??
@@ -33,6 +34,43 @@ export default function Compose() {
       el.focus();
       el.setSelectionRange(s + tag.length, s + tag.length);
     });
+  };
+
+  const probeFire = async () => {
+    if (!active || !draft.subject || !draft.html) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const d = await api("/api/probe", {
+        method: "POST",
+        body: JSON.stringify({ profileId: active.id, ...draft }),
+      });
+      setMsg(
+        d.ok
+          ? { text: `probe sent to ${d.seed} — check placement in ~60s`, ok: true }
+          : { text: d.error ?? "probe failed", ok: false },
+      );
+    } catch (e) {
+      setMsg({ text: e instanceof Error ? e.message : "probe failed", ok: false });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const probeCheck = async () => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const d = await api("/api/probe");
+      setProbes(d.probes ?? []);
+      if (d.error) setMsg({ text: d.error, ok: false });
+      else if (!d.configured)
+        setMsg({ text: "seed imap not set — settings → seed inbox", ok: false });
+    } catch (e) {
+      setMsg({ text: e instanceof Error ? e.message : "scan failed", ok: false });
+    } finally {
+      setBusy(false);
+    }
   };
 
   const sendTest = async () => {
@@ -173,6 +211,50 @@ export default function Compose() {
                 send
               </Btn>
             </div>
+          </Card>
+
+          <Card>
+            <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
+              spam placement
+            </h3>
+            <div className="flex gap-2">
+              <Btn onClick={probeFire} disabled={busy || !active || !draft.html}>
+                [ test placement ]
+              </Btn>
+              <Btn onClick={probeCheck} disabled={busy}>[ check ]</Btn>
+            </div>
+            {probes.slice(0, 3).map((p: any) => (
+              <div key={p.id} className="mt-2 border-l-2 pl-2 text-[11px]"
+                style={{
+                  borderColor:
+                    p.placement === "inbox"
+                      ? "#34d399"
+                      : p.placement === "spam"
+                        ? "#f87171"
+                        : "#52525b",
+                }}
+              >
+                <div className="text-zinc-400">
+                  {p.placement === "inbox"
+                    ? "✓ inbox"
+                    : p.placement === "spam"
+                      ? `✗ spam (${p.folder ?? "?"})`
+                      : "… still in transit"}
+                </div>
+                {p.auth && (
+                  <div className="text-zinc-600">
+                    {[
+                      p.auth.spf && `spf=${p.auth.spf}`,
+                      p.auth.dkim &&
+                        `dkim=${p.auth.dkim}${p.auth.dkimDomain ? `(${p.auth.dkimDomain})` : ""}`,
+                      p.auth.dmarc && `dmarc=${p.auth.dmarc}`,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </div>
+                )}
+              </div>
+            ))}
           </Card>
 
           <Card>
