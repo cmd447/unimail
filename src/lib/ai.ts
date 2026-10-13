@@ -19,33 +19,63 @@ async function cfg() {
 
 export const aiEnabled = async () => Boolean((await cfg()).key);
 
+// models sometimes wrap json in prose or fences — dig it out
+function parseLoose(raw: string): any {
+  const s = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "");
+  try {
+    return JSON.parse(s);
+  } catch {
+    /* keep digging */
+  }
+  const i = s.indexOf("{");
+  const j = s.lastIndexOf("}");
+  if (i >= 0 && j > i) {
+    try {
+      return JSON.parse(s.slice(i, j + 1));
+    } catch {
+      /* fallthrough */
+    }
+  }
+  throw new Error("ai didn't return clean json — try again");
+}
+
 async function chat(system: string, user: string): Promise<any> {
   const c = await cfg();
-  const r = await fetch(`${c.base}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${c.key}`,
-    },
-    body: JSON.stringify({
-      model: c.model,
-      temperature: 0.4,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    }),
-  });
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok)
-    throw new Error(d.error?.message ?? `ai endpoint http ${r.status}`);
-  const raw = d.choices?.[0]?.message?.content ?? "{}";
-  try {
-    return JSON.parse(raw);
-  } catch {
-    throw new Error("ai didn't return clean json — try again");
+  let lastErr: Error = new Error("ai failed");
+  // strict json mode first; some models choke on it → retry loose
+  for (const jsonMode of [true, false]) {
+    const r = await fetch(`${c.base}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${c.key}`,
+      },
+      body: JSON.stringify({
+        model: c.model,
+        temperature: 0.4,
+        ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+      }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      lastErr = new Error(d.error?.message ?? `ai endpoint http ${r.status}`);
+      continue;
+    }
+    const raw = d.choices?.[0]?.message?.content ?? "";
+    try {
+      return parseLoose(raw);
+    } catch (e) {
+      lastErr = e instanceof Error ? e : new Error("ai failed");
+    }
   }
+  throw lastErr;
 }
 
 const SYS_REWRITE = `You rewrite marketing emails so they land in the inbox instead of the spam folder.
@@ -73,9 +103,15 @@ export interface LetterDraft {
   text: string;
 }
 
-export async function aiRewriteLetter(d: LetterDraft): Promise<LetterDraft> {
+export async function aiRewriteLetter(
+  d: LetterDraft,
+  focus?: string,
+): Promise<LetterDraft> {
+  const sys = focus
+    ? `${SYS_REWRITE}\n\nThis run targets ONE flagged problem only: "${focus}". Change the minimum needed to clear it — leave everything else identical.`
+    : SYS_REWRITE;
   const out = await chat(
-    SYS_REWRITE,
+    sys,
     JSON.stringify({ subject: d.subject, html: d.html }),
   );
   const subject = String(out.subject ?? d.subject);

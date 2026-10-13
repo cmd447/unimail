@@ -27,7 +27,12 @@ export async function POST(req: NextRequest) {
       const r = await aiJudgeLetter(draft);
       return NextResponse.json({ ok: true, ...r });
     }
-    const r = await aiRewriteLetter(draft);
+    const r = await aiRewriteLetter(
+      draft,
+      typeof body.focus === "string" && body.focus.trim()
+        ? body.focus.slice(0, 400)
+        : undefined,
+    );
     return NextResponse.json({ ok: true, ...r });
   } catch (e) {
     return NextResponse.json(

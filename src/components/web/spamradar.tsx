@@ -37,12 +37,12 @@ export function SpamRadar({
   const draft: Draft = { subject, html, text };
   const fixable = report.issues.filter((i) => i.patch);
 
-  const aiRewrite = async () => {
+  const aiRewrite = async (focus?: string) => {
     setAiErr(null);
     try {
       const d = await api("/api/ai/letter", {
         method: "POST",
-        body: JSON.stringify({ mode: "rewrite", ...draft }),
+        body: JSON.stringify({ mode: "rewrite", ...draft, ...(focus ? { focus } : {}) }),
       });
       if (!d.ok) throw new Error(d.error);
       onApply?.({ subject: d.subject, html: d.html, text: d.text });
@@ -105,7 +105,7 @@ export function SpamRadar({
           {aiOn && onApply && (
             <>
               <Btn onClick={aiJudge}>[ ai scan ]</Btn>
-              <Btn variant="primary" onClick={aiRewrite}>[ ai rewrite ]</Btn>
+              <Btn variant="primary" onClick={() => aiRewrite()}>[ ai rewrite ]</Btn>
             </>
           )}
           {onApply && fixable.length > 0 && (
@@ -126,9 +126,18 @@ export function SpamRadar({
       )}
       {aiIssues.map((i, n) => (
         <div key={`ai-${n}`} className="mb-2 border-l-2 pl-2 text-xs" style={{ borderColor: sevBorder(i.severity) }}>
-          <div className={sevCls(i.severity)}>
-            <span className="text-zinc-600">[ai] </span>
-            {i.message}
+          <div className="flex items-start justify-between gap-2">
+            <div className={sevCls(i.severity)}>
+              <span className="text-zinc-600">[ai] </span>
+              {i.message}
+            </div>
+            {onApply && (
+              <Btn
+                onClick={() => aiRewrite(`${i.message} — ${i.fix}`)}
+              >
+                [ fix ]
+              </Btn>
+            )}
           </div>
           {i.fix ? <div className="mt-0.5 text-zinc-500">→ {i.fix}</div> : null}
         </div>
@@ -147,6 +156,11 @@ export function SpamRadar({
                 {onApply && i.patch && (
                   <Btn onClick={() => onApply(i.patch!(draft))}>
                     [ fix — {i.auto} ]
+                  </Btn>
+                )}
+                {onApply && !i.patch && aiOn && (
+                  <Btn onClick={() => aiRewrite(`${i.message} — ${i.fix}`)}>
+                    [ ai fix ]
                   </Btn>
                 )}
               </div>
