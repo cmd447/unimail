@@ -114,3 +114,35 @@ export async function aiJudgeLetter(d: LetterDraft): Promise<{ score: number; is
     }));
   return { score, issues };
 }
+
+/* ------------------------- leads ------------------------- */
+
+const SYS_LEADS = `You turn messy pasted text into a clean contact list.
+
+Extract every email address you can find, in any format:
+- bare emails (one per line, comma/space separated)
+- "Name <email>" or "email — Name" or vcard/signature dumps
+- "email, first, last" csv rows
+- json, markdown tables, whatever
+
+Rules:
+- every row needs a valid email — skip anything that isn't one
+- pull the person's name when it's there (split into first/last); titles, phones, companies, and noise get dropped
+- role mailboxes (info@, sales@, noreply@...) get empty names — never invent one
+- never make up a name that isn't in the text
+
+Return JSON: {"rows": [{"email": "...", "firstName": "...", "lastName": "..."}]}`;
+
+export async function aiParseLeads(text: string): Promise<
+  { email: string; firstName: string; lastName: string }[]
+> {
+  const out = await chat(SYS_LEADS, text.slice(0, 12000));
+  const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return (Array.isArray(out.rows) ? out.rows : [])
+    .filter((r: any) => r && EMAIL.test(String(r.email ?? "")))
+    .map((r: any) => ({
+      email: String(r.email).toLowerCase(),
+      firstName: String(r.firstName ?? ""),
+      lastName: String(r.lastName ?? ""),
+    }));
+}
