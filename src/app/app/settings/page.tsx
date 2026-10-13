@@ -12,6 +12,7 @@ export default function Settings() {
   const [seed, setSeed] = useState({
     email: "", host: "", port: "993", user: "", pass: "",
   });
+  const [ai, setAi] = useState({ key: "", base: "", model: "" });
   const [msg, setMsg] = useState<string | null>(null);
   const s = data?.settings;
 
@@ -30,7 +31,7 @@ export default function Settings() {
     <div className="max-w-2xl">
       <PageHead title="Settings" sub="caps, seed inbox, suppressions" />
       <Err msg={msg} />
-
+ 
       <Card className="mb-4">
         <div className="flex items-center justify-between">
           <div>
@@ -81,6 +82,62 @@ export default function Settings() {
             set
           </Btn>
         </div>
+      </Card>
+
+      <Card className="mb-4">
+        <h2 className="text-sm font-medium text-zinc-300">
+          AI rewrite — spam radar's big gun
+        </h2>
+        <p className="mb-3 text-xs text-zinc-500">
+          powers [ ai rewrite ] on letters — rewrites hype into natural copy.
+          any openai-compatible endpoint works (openai, groq, openrouter, ollama).
+          {s?.aiEnabled ? (
+            <> <span className="text-emerald-400">on{s.aiModel ? ` — ${s.aiModel}` : ""}</span></>
+          ) : (
+            <> <span className="text-zinc-600">off — no key set</span></>
+          )}
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Inp
+            label={s?.aiKeySet ? "api key (blank = keep)" : "api key"}
+            type="password"
+            autoComplete="new-password"
+            value={ai.key}
+            onChange={(e) => setAi({ ...ai, key: e.target.value })}
+            placeholder="sk-…"
+          />
+          <Inp
+            label="model (blank = gpt-4o-mini)"
+            value={ai.model}
+            onChange={(e) => setAi({ ...ai, model: e.target.value })}
+            placeholder={s?.aiModel || "gpt-4o-mini"}
+          />
+          <Inp
+            label="base url (blank = openai)"
+            inputMode="url"
+            value={ai.base}
+            onChange={(e) => setAi({ ...ai, base: e.target.value })}
+            placeholder={s?.aiBaseUrl || "https://api.openai.com/v1"}
+          />
+        </div>
+        <Btn
+          variant="primary"
+          className="mt-3"
+          onClick={() =>
+            run(() =>
+              api("/api/settings", {
+                method: "PATCH",
+                body: JSON.stringify({
+                  ...(ai.key && { aiKey: ai.key }),
+                  ...(ai.base && { aiBaseUrl: ai.base }),
+                  ...(ai.model && { aiModel: ai.model }),
+                }),
+              }),
+            )
+          }
+        >
+          [ save ]
+        </Btn>
       </Card>
 
       <Card className="mb-4">

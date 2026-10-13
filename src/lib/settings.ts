@@ -10,6 +10,10 @@ export interface Settings {
   seedImapPort?: number;
   seedImapUser?: string;
   seedImapPassEnc?: string; // encrypted
+  // ai layer for spam rewriting — any openai-compatible endpoint works
+  aiKeyEnc?: string; // encrypted api key
+  aiBaseUrl?: string; // default: api.openai.com
+  aiModel?: string;
 }
 
 const DOC = () => db().collection("settings").doc("global");
