@@ -30,16 +30,20 @@ function parseLoose(raw: string): any {
   } catch {
     /* keep digging */
   }
-  const i = s.indexOf("{");
-  const j = s.lastIndexOf("}");
-  if (i >= 0 && j > i) {
-    try {
-      return JSON.parse(s.slice(i, j + 1));
-    } catch {
-      /* fallthrough */
+  for (const [open, close] of [["{", "}"], ["[", "]"]] as const) {
+    const i = s.indexOf(open);
+    const j = s.lastIndexOf(close);
+    if (i >= 0 && j > i) {
+      try {
+        return JSON.parse(s.slice(i, j + 1));
+      } catch {
+        /* try the other shape */
+      }
     }
   }
-  throw new Error("ai didn't return clean json — try again");
+  throw new Error(
+    `ai returned non-json — first 120 chars: ${JSON.stringify(raw.slice(0, 120))}`,
+  );
 }
 
 async function chat(system: string, user: string): Promise<any> {
@@ -55,10 +59,18 @@ async function chat(system: string, user: string): Promise<any> {
       },
       body: JSON.stringify({
         model: c.model,
-        temperature: 0.4,
+        temperature: 0.3,
+        max_completion_tokens: 16384,
+        // gpt-oss on groq burns tokens on hidden reasoning otherwise
+        ...(c.base.includes("groq.com") ? { include_reasoning: false } : {}),
         ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
         messages: [
-          { role: "system", content: system },
+          {
+            role: "system",
+            content:
+              system +
+              "\n\nRespond with ONLY the JSON object. No markdown fences, no reasoning, no commentary — raw JSON.",
+          },
           { role: "user", content: user },
         ],
       }),
