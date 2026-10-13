@@ -9,10 +9,11 @@ function UnsubscribeInner() {
   const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
   const c = sp.get("c") ?? "";
   const m = sp.get("m") ?? "";
+  const e = sp.get("e") ?? "";
 
   async function confirm() {
     setState("busy");
-    const res = await fetch(`/api/unsubscribe?c=${c}&m=${m}`, { method: "POST" });
+    const res = await fetch(`/api/unsubscribe?c=${c}&m=${m}&e=${encodeURIComponent(e)}`, { method: "POST" });
     const data = await res.json().catch(() => ({}));
     setState(data.ok ? "done" : "error");
   }
@@ -43,7 +44,7 @@ function UnsubscribeInner() {
             </p>
             <button
               onClick={confirm}
-              disabled={state === "busy" || !c || !m}
+              disabled={state === "busy" || (!e && (!c || !m))}
               className="mt-5 w-full rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
             >
               {state === "busy" ? "Working…" : "Confirm unsubscribe"}

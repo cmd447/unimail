@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/api";
 import { sendMail } from "@/lib/mailer";
-import { renderMerge } from "@/lib/render";
+import { mergeData, renderMerge } from "@/lib/render";
 
-const SAMPLE = {
-  email: "recipient@example.com",
-  first_name: "Jane",
-  last_name: "Doe",
-  name: "Jane Doe",
-};
-
+// one-to-one send — merge tags resolve against the actual recipient,
+// falling back to names guessed from the email local part
 export async function POST(req: NextRequest) {
   const { error } = await requireApiSession();
   if (error) return error;
   const body = await req.json().catch(() => ({}));
-  const { profileId, to, subject, html, text } = body;
+  const { profileId, to, subject, html, text, firstName, lastName } = body;
 
   if (!profileId || !to || !subject || !html) {
     return NextResponse.json(
@@ -23,12 +18,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+  const data = {
+    ...mergeData({ email: to, firstName, lastName }),
+    unsubscribe_url: `${appUrl}/unsubscribe?e=${encodeURIComponent(to)}`,
+  };
+
   try {
     const info = await sendMail(profileId, {
       to,
-      subject: `[TEST] ${renderMerge(subject, SAMPLE)}`,
-      html: renderMerge(html, SAMPLE),
-      text: renderMerge(text ?? "", SAMPLE),
+      subject: renderMerge(subject, data),
+      html: renderMerge(html, data),
+      text: renderMerge(text ?? "", data),
     });
     return NextResponse.json({
       ok: true,

@@ -34,6 +34,19 @@ async function handle(campaignId: string, messageId: string) {
 export async function POST(req: NextRequest) {
   const c = req.nextUrl.searchParams.get("c") ?? "";
   const m = req.nextUrl.searchParams.get("m") ?? "";
+  const e = req.nextUrl.searchParams.get("e") ?? "";
+  if (e) {
+    // one-off sends carry no campaign — suppress by bare email
+    await addSuppression(e.toLowerCase(), "unsubscribed", "compose");
+    await db().collection("events").add({
+      campaignId: "",
+      email: e.toLowerCase(),
+      status: "unsubscribed",
+      detail: "one-off opt-out",
+      at: FieldValue.serverTimestamp(),
+    });
+    return NextResponse.json({ ok: true });
+  }
   if (!c || !m) return NextResponse.json({ ok: false }, { status: 400 });
   return NextResponse.json(await handle(c, m));
 }

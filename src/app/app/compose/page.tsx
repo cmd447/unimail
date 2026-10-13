@@ -13,7 +13,8 @@ export default function Compose() {
   const { data: pData } = useFetch<{ profiles: any[] }>("/api/profiles");
   const [draft, setDraft] = useState({ subject: "", html: "", text: "" });
   const [tab, setTab] = useState<"edit" | "preview" | "text">("edit");
-  const [testTo, setTestTo] = useState("");
+  const [to, setTo] = useState("");
+  const [rcpt, setRcpt] = useState({ firstName: "", lastName: "" });
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [probes, setProbes] = useState<any[]>([]);
@@ -73,16 +74,20 @@ export default function Compose() {
     }
   };
 
-  const sendTest = async () => {
-    if (!active || !testTo) return;
+  const sendOne = async () => {
+    if (!active || !to) return;
     setBusy(true);
     setMsg(null);
     try {
       const d = await api("/api/send-test", {
         method: "POST",
-        body: JSON.stringify({ profileId: active.id, to: testTo, ...draft }),
+        body: JSON.stringify({ profileId: active.id, to, ...rcpt, ...draft }),
       });
-      setMsg(d.ok ? { text: `sent — ${d.response ?? "OK"}`, ok: true } : { text: `test failed: ${d.error}`, ok: false });
+      setMsg(
+        d.ok
+          ? { text: `sent to ${to} — ${d.response ?? "accepted"}`, ok: true }
+          : { text: `failed: ${d.error}`, ok: false },
+      );
     } catch (e) {
       setMsg({ text: e instanceof Error ? e.message : "Failed", ok: false });
     } finally {
@@ -92,7 +97,7 @@ export default function Compose() {
 
   return (
     <div>
-      <PageHead title="Compose" sub="send a one-off — every recipient gets their own version">
+      <PageHead title="Compose" sub="send one email to one person — merges fill from their details">
         <Sel
           value=""
           className="w-48"
@@ -193,22 +198,43 @@ export default function Compose() {
 
           <Card>
             <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
-              test send
+              send it
             </h3>
             <p className="mb-2 text-xs text-zinc-600">
               via {active ? `${active.name} (${active.fromEmail})` : "no sender active"}
             </p>
-            <div className="flex gap-2">
+            <div className="space-y-2">
               <input
                 type="email"
                 inputMode="email"
-                placeholder="you@test.com"
-                value={testTo}
-                onChange={(e) => setTestTo(e.target.value)}
-                className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
+                placeholder="them@their-mail.com"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                className="w-full border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
               />
-              <Btn variant="primary" onClick={sendTest} disabled={busy || !testTo || !active}>
-                send
+              <div className="flex gap-2">
+                <input
+                  placeholder="first name"
+                  value={rcpt.firstName}
+                  onChange={(e) => setRcpt({ ...rcpt, firstName: e.target.value })}
+                  className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
+                />
+                <input
+                  placeholder="last name"
+                  value={rcpt.lastName}
+                  onChange={(e) => setRcpt({ ...rcpt, lastName: e.target.value })}
+                  className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
+                />
+              </div>
+              <p className="text-[11px] text-zinc-600">
+                names feed {"{{first_name}}"} / {"{{name}}"} — blank = guessed from the email
+              </p>
+              <Btn
+                variant="primary"
+                onClick={sendOne}
+                disabled={busy || !to || !active || !draft.subject || !draft.html}
+              >
+                [ send ]
               </Btn>
             </div>
           </Card>
