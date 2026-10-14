@@ -41,6 +41,7 @@ export interface StoredProfile {
   isDefault?: boolean;
   lastVerifiedAt?: FirebaseFirestore.Timestamp | null;
   lastError?: string | null;
+  lastBounceScanAt?: string | null;
   createdAt?: FirebaseFirestore.Timestamp | null;
 }
 
@@ -111,7 +112,7 @@ export interface Campaign {
   completedAt?: string | null;
 }
 
-export type MessageStatus = "queued" | "sent" | "failed" | "skipped";
+export type MessageStatus = "queued" | "inflight" | "sent" | "failed" | "skipped";
 
 export interface CampaignMessage {
   id: string;

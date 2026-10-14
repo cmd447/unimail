@@ -1,4 +1,5 @@
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import crypto from "crypto";
 import { db } from "@/lib/firebase/admin";
 import { getCampaign, remainingQueued, setCampaignStatus } from "@/lib/campaigns";
 import { getProfile } from "@/lib/profiles";
@@ -85,26 +86,72 @@ export async function processBatch(campaignId: string) {
     .doc(campaignId)
     .collection("messages");
 
+  // rescue messages a crashed tick left claimed (>10min old) — they'd stick
+  // as "inflight" forever otherwise
+  const stuck = await msgsRef.where("status", "==", "inflight").limit(100).get();
+  const rescue = stuck.docs.filter(
+    (d) => (d.data().claimedAt?.toMillis?.() ?? 0) < Date.now() - 10 * 60_000,
+  );
+  if (rescue.length) {
+    const b = db().batch();
+    rescue.forEach((d) =>
+      b.update(d.ref, { status: "queued", claimedBy: null, claimedAt: null }),
+    );
+    await b.commit();
+  }
+
+  // pace = the configured rate, honestly. slow rates get smaller ticks so the
+  // function still finishes inside maxDuration — no silent speed-ups
+  const pace = Math.max(
+    0,
+    Math.ceil(60_000 / (campaign.rateLimit || profile.rateLimit || 60)),
+  );
+  const tickBatch = Math.max(1, Math.min(BATCH, Math.floor(48_000 / Math.max(pace, 1))));
+
   // no orderBy — equality+orderBy needs a composite index; doc order is fine
   const snap = await msgsRef
     .where("status", "==", "queued")
-    .limit(BATCH)
+    .limit(tickBatch)
     .get();
 
   if (snap.empty) {
+    // peers mid-send? their writes land shortly — chain until they're done
+    const mid = await msgsRef.where("status", "==", "inflight").count().get();
+    if (mid.data().count > 0) {
+      return { active: true, remaining: mid.data().count, note: "peers in flight" };
+    }
     await setCampaignStatus(campaignId, "completed");
     return { active: false, remaining: 0, note: "completed" };
   }
 
-  const suppressed = await suppressedSet(snap.docs.map((d) => d.data().email));
+  // claim before send — two overlapping ticks must never touch one contact
+  const tickId = crypto.randomUUID();
+  const claimed: typeof snap.docs = [];
+  for (const doc of snap.docs) {
+    const won = await db()
+      .runTransaction(async (t) => {
+        const fresh = await t.get(doc.ref);
+        if (!fresh.exists || fresh.data()?.status !== "queued") return false;
+        t.update(doc.ref, {
+          status: "inflight",
+          claimedBy: tickId,
+          claimedAt: Timestamp.now(),
+        });
+        return true;
+      })
+      .catch(() => false);
+    if (won) claimed.push(doc);
+  }
+  if (!claimed.length) {
+    // a concurrent tick beat us to the whole batch — try again next hop
+    return { active: true, remaining: snap.size, note: "claimed by another tick" };
+  }
+
+  const suppressed = await suppressedSet(claimed.map((d) => d.data().email));
   // wave cap — batchSize contacts per run, then auto-pause for a manual next wave
   const waveCap = campaign.batchSize || Infinity;
   let waveSent = campaign.batchSent ?? 0;
   const appUrl = process.env.APP_URL ?? "http://localhost:3000";
-  const pace = Math.min(
-    3000,
-    Math.max(0, Math.ceil(60_000 / (campaign.rateLimit || profile.rateLimit || 60))),
-  );
   const transport = makeTransport(profile, true);
   const cRef = db().collection("campaigns").doc(campaignId);
   const from = campaign.fromName
@@ -145,7 +192,8 @@ export async function processBatch(campaignId: string) {
   }
 
   try {
-    for (const doc of snap.docs) {
+    for (let i = 0; i < claimed.length; i++) {
+      const doc = claimed[i];
       const m = doc.data();
       const msgId = doc.id;
       const email: string = m.email;
@@ -257,7 +305,7 @@ export async function processBatch(campaignId: string) {
         );
       }
 
-      if (pace) await sleep(pace);
+      if (pace && i < claimed.length - 1) await sleep(pace); // no pause after the last one
       if (waveSent >= waveCap) break; // wave boundary mid-batch — stop here
     }
   } finally {
@@ -266,6 +314,11 @@ export async function processBatch(campaignId: string) {
 
   const remaining = await remainingQueued(campaignId);
   if (!remaining) {
+    // peers still mid-send? chain keeps going until every claim resolves
+    const mid = await msgsRef.where("status", "==", "inflight").count().get();
+    if (mid.data().count > 0) {
+      return { active: true, remaining: mid.data().count, note: "peers in flight" };
+    }
     await setCampaignStatus(campaignId, "completed");
     return { active: false, remaining: 0, note: "completed" };
   }

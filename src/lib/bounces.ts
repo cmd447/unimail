@@ -34,7 +34,12 @@ export async function pollBounces(profile: StoredProfile): Promise<{
     await client.connect();
     const lock = await client.getMailboxLock("INBOX");
     try {
-      const since = new Date(Date.now() - 7 * 24 * 3600 * 1000);
+      // high-water mark — without this, every cron re-downloads the full source
+      // of every unread message in the box, forever
+      const last = profile.lastBounceScanAt;
+      const since = last
+        ? new Date(new Date(last).getTime() - 60_000) // overlap for clock skew
+        : new Date(Date.now() - 7 * 24 * 3600 * 1000);
       const uids = await client.search({ seen: false, since });
       if (!uids || !uids.length) return out;
 
@@ -70,6 +75,10 @@ export async function pollBounces(profile: StoredProfile): Promise<{
     } finally {
       lock.release();
     }
+    await db()
+      .collection("smtpProfiles")
+      .doc(profile.id)
+      .update({ lastBounceScanAt: new Date().toISOString() });
     await client.logout();
   } catch (e) {
     await db()
