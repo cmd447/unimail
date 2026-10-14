@@ -4,7 +4,11 @@ import { getProfile } from "@/lib/profiles";
 import type { StoredProfile } from "@/lib/types";
 
 export function makeTransport(profile: StoredProfile, pool = false) {
+  // EHLO hostname must match the sending domain — os.hostname() leaks
+  // "DESKTOP-XYZ" or "169.254.x.x" into Received headers (spam signal)
+  const domain = profile.fromEmail?.split("@")[1] || undefined;
   return nodemailer.createTransport({
+    ...(domain && { name: domain }),
     host: profile.host,
     port: profile.port,
     secure: profile.encryption === "ssl",

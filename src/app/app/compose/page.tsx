@@ -106,7 +106,7 @@ export default function Compose() {
       });
       setMsg(
         d.ok
-          ? { text: `sent to ${to} — ${d.response ?? "accepted"}`, ok: true }
+          ? { text: `sent ${d.mode === "plain" ? "plain-text" : "html"} to ${to} — ${d.response ?? "accepted"}`, ok: true }
           : { text: `failed: ${d.error}`, ok: false },
       );
     } catch (e) {

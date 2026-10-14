@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
       ok: true,
       messageId: info.messageId,
       response: info.response,
+      mode: plainOnly ? "plain" : "html",
     });
   } catch (e) {
     return NextResponse.json(
