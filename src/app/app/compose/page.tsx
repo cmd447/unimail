@@ -121,7 +121,7 @@ export default function Compose() {
 
   return (
     <div>
-      <PageHead title="Compose" sub="send one email to one person — paste your html or type plain text" />
+      <PageHead title="Compose" />
 
       <Note msg={msg} />
 

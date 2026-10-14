@@ -57,13 +57,11 @@ export default function WebShell({ children }: { children: React.ReactNode }) {
           href="/app"
           className="flex items-center gap-2 border-r border-hairline px-4 font-display text-sm font-bold uppercase tracking-[-0.02em] text-phosphor"
         >
-          UniMail<span className="text-hazard">®</span>
+          UniMail
         </Link>
-        <div className="micro hidden items-center gap-3 px-4 sm:flex">
-          <span>self-hosted smtp relay</span>
-          <span className="text-hairline-strong">/</span>
+        <div className="micro hidden items-center px-4 sm:flex">
           <span className={senders ? "text-signal" : ""}>
-            {senders ? `${senders} sender${senders === 1 ? "" : "s"} armed` : "no senders"}
+            {senders ? `${senders} sender${senders === 1 ? "" : "s"}` : "no senders"}
           </span>
         </div>
         <div className="flex-1" />
@@ -72,7 +70,7 @@ export default function WebShell({ children }: { children: React.ReactNode }) {
           title="Switch to terminal mode"
           className="micro flex items-center border-l border-hairline px-4 transition-colors hover:bg-compartment hover:text-phosphor"
         >
-          &gt; terminal
+          terminal
         </Link>
         <button
           onClick={logout}
@@ -107,11 +105,6 @@ export default function WebShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          <div className="micro mt-auto flex items-center justify-between border-t border-hairline px-4 py-3">
-            <span>rev 2.6</span>
-            <span className="text-hairline-strong">///</span>
-            <span>unit d-01</span>
-          </div>
         </aside>
 
         {/* mobile nav row */}

@@ -66,7 +66,7 @@ export default function Profiles() {
 
   return (
     <div>
-      <PageHead title="SMTP" sub="the accounts emails go out through — add one, hit verify">
+      <PageHead title="SMTP">
         <Btn
           variant="primary"
           onClick={() => {
@@ -179,15 +179,15 @@ export default function Profiles() {
                         <span
                           className={
                             ch.state === "ok"
-                              ? "text-emerald-400"
+                              ? "text-signal"
                               : ch.state === "warn"
                                 ? "text-amber-400"
                                 : ch.state === "fail"
-                                  ? "text-red-400"
-                                  : "text-zinc-500"
+                                  ? "text-hazard"
+                                  : "text-muted"
                           }
                         >
-                          [{ch.state}]
+                          {ch.state}
                         </span>
                         <span className="w-16 shrink-0 uppercase text-zinc-600">{ch.label}</span>
                         <span className="text-zinc-400">{ch.detail}</span>

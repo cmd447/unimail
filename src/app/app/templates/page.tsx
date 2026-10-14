@@ -37,7 +37,7 @@ export default function Letters() {
 
   return (
     <div>
-      <PageHead title="Letters" sub="reusable emails — {{first_name}} and friends personalize per contact">
+      <PageHead title="Letters">
         <Btn variant="primary" onClick={() => open()}>+ write a letter</Btn>
       </PageHead>
       <Err msg={msg} />

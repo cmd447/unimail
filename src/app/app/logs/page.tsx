@@ -11,7 +11,7 @@ export default function Logs() {
 
   return (
     <div>
-      <PageHead title="Logs" sub="every email sent — click one for the full receipt">
+      <PageHead title="Logs">
         <Btn onClick={reload}>{loading ? "…" : "refresh"}</Btn>
       </PageHead>
       <LogFeed events={data?.events ?? []} />

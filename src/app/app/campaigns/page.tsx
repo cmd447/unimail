@@ -14,7 +14,7 @@ export default function Blast() {
 
   return (
     <div>
-      <PageHead title="Blast" sub="every send — click one for the receipts">
+      <PageHead title="Blast">
         <Btn onClick={reload}>Refresh</Btn>
         <Link href="/app/campaigns/new">
           <Btn variant="primary">+ new blast</Btn>

@@ -49,15 +49,15 @@ export default function Overview() {
 
   return (
     <div>
-      <PageHead title="Home" sub="what's set up and what's going out" />
+      <PageHead title="Home" />
 
       {settings.data?.settings.killSwitch ? (
-        <div className="mb-4 flex items-center justify-between border border-hazard/60 border-l-2 border-l-hazard bg-hazard/5 px-4 py-3">
-          <span className="font-mono text-[12px] uppercase tracking-[0.08em] text-hazard">
+        <div className="mb-4 flex items-center justify-between">
+          <span className="font-mono text-xs text-hazard">
             kill switch on — all sends paused
           </span>
           <Link href="/app/settings" className="font-mono text-xs text-phosphor underline">
-            Fix it &gt;&gt;&gt;
+            settings →
           </Link>
         </div>
       ) : null}
@@ -75,7 +75,7 @@ export default function Overview() {
           >
             <span
               className={`w-14 shrink-0 text-[11px] uppercase ${
-                s.done ? "text-green-500" : "text-zinc-600"
+                s.done ? "text-signal" : "text-muted"
               }`}
             >
               {s.done ? "done" : `step ${s.n}`}

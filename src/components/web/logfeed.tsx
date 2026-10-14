@@ -5,19 +5,19 @@ import { api } from "@/components/web/api";
 import { Btn, Card } from "@/components/web/ui";
 
 export const LOG_COLOR: Record<string, string> = {
-  sent: "text-emerald-400",
+  sent: "text-signal",
   sending: "text-sky-400",
-  failed: "text-red-400",
-  bounced: "text-red-400",
+  failed: "text-hazard",
+  bounced: "text-hazard",
   skipped: "text-amber-400",
   probe: "text-fuchsia-400",
   chain: "text-amber-400",
-  "tick-failed": "text-red-400",
+  "tick-failed": "text-hazard",
 };
 
 const ROW = ({ k, v }: { k: string; v: unknown }) =>
   v === null || v === undefined || v === "" || (Array.isArray(v) && !v.length) ? null : (
-    <div className="grid grid-cols-[130px_1fr] gap-2 border-b border-zinc-800 py-1 text-[11px]">
+    <div className="grid grid-cols-[130px_1fr] gap-2 border-b border-hairline py-1 text-[11px]">
       <span className="text-zinc-600">{k}</span>
       <span className="break-all text-zinc-300">
         {typeof v === "object" ? JSON.stringify(v) : String(v)}
@@ -50,8 +50,8 @@ export function LogDetail({
 
   return (
     <div className="fixed inset-0 z-50 overflow-auto bg-black/90 p-4 font-mono">
-      <Card className="mx-auto max-w-4xl border border-zinc-700 p-4">
-        <div className="mb-3 flex items-center justify-between border-b border-zinc-800 pb-2">
+      <Card className="mx-auto max-w-4xl border-hairline-strong p-4">
+        <div className="mb-3 flex items-center justify-between border-b border-hairline pb-2">
           <div>
             <span className={`font-bold uppercase ${LOG_COLOR[event.status] ?? "text-zinc-300"}`}>
               {event.status}
@@ -65,7 +65,7 @@ export function LogDetail({
         </div>
 
         <h3 className="mb-1 text-xs text-zinc-500">Delivery receipt</h3>
-        <div className="mb-4 border border-zinc-800 px-2">
+        <div className="mb-4 border border-hairline px-2">
           <ROW k="blast" v={event.campaignName} />
           <ROW k="detail" v={event.detail} />
           {Object.entries(event.meta ?? {}).map(([k, v]) => (
@@ -106,17 +106,17 @@ export function LogDetail({
               <iframe
                 sandbox=""
                 srcDoc={r.html}
-                className="h-[420px] w-full border border-zinc-800 bg-white"
+                className="h-[420px] w-full border border-hairline bg-white"
                 title="letter"
               />
             )}
             {view === "plain" && (
-              <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap border border-zinc-800 p-3 text-xs text-zinc-300">
+              <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap border border-hairline p-3 text-xs text-zinc-300">
                 {r.text || "(no plain part)"}
               </pre>
             )}
             {view === "raw" && (
-              <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap border border-zinc-800 p-3 text-xs text-zinc-500">
+              <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap border border-hairline p-3 text-xs text-zinc-500">
                 {r.html}
               </pre>
             )}
@@ -136,12 +136,12 @@ export function LogFeed({ events }: { events: any[] }) {
   const [open, setOpen] = useState<any | null>(null);
   return (
     <>
-      <div className="border border-zinc-700 font-mono text-xs">
+      <div className="border border-hairline-strong font-mono text-xs">
         {events.map((e: any) => (
           <div
             key={e.id}
             onClick={() => setOpen(e)}
-            className="cursor-pointer border-b border-zinc-800 px-2 py-1.5 last:border-b-0 hover:bg-zinc-950"
+            className="cursor-pointer border-b border-hairline px-2 py-1.5 last:border-b-0 hover:bg-compartment"
           >
             <div className="flex flex-wrap items-baseline gap-x-2">
               <span className="text-zinc-600">
@@ -152,7 +152,7 @@ export function LogFeed({ events }: { events: any[] }) {
               </span>
               <span className="text-zinc-200">{e.email}</span>
               {e.campaignName && e.campaignName !== "-" && (
-                <span className="text-zinc-500">[{e.campaignName}]</span>
+                <span className="text-zinc-500">{e.campaignName}</span>
               )}
               {e.meta?.messageId && <span className="ml-auto text-zinc-700">→</span>}
             </div>

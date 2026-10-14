@@ -209,23 +209,13 @@ export function Td({
 
 export function Err({ msg }: { msg: string | null }) {
   if (!msg) return null;
-  return (
-    <div className="mb-4 border border-hazard/60 border-l-2 border-l-hazard bg-hazard/5 px-3 py-2 font-mono text-xs text-hazard">
-      {msg}
-    </div>
-  );
+  return <div className="mb-4 font-mono text-xs text-hazard">{msg}</div>;
 }
 
 export function Note({ msg }: { msg: { text: string; ok: boolean } | null }) {
   if (!msg) return null;
   return (
-    <div
-      className={`mb-4 border px-3 py-2 font-mono text-xs ${
-        msg.ok
-          ? "border-signal/40 border-l-2 border-l-signal bg-signal/5 text-signal"
-          : "border-hazard/60 border-l-2 border-l-hazard bg-hazard/5 text-hazard"
-      }`}
-    >
+    <div className={`mb-4 font-mono text-xs ${msg.ok ? "text-signal" : "text-hazard"}`}>
       {msg.text}
     </div>
   );

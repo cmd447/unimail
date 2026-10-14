@@ -30,7 +30,7 @@ export default function Settings() {
 
   return (
     <div className="max-w-2xl">
-      <PageHead title="Settings" sub="caps, seed inbox, suppressions" />
+      <PageHead title="Settings" />
       <Note msg={msg} />
  
       <Card className="mb-4">
@@ -90,10 +90,10 @@ export default function Settings() {
           AI rewrite — spam radar's big gun
         </h2>
         <p className="mb-3 text-xs text-zinc-500">
-          powers [ ai rewrite ] on letters — rewrites hype into natural copy.
+          powers ai rewrite on letters — rewrites hype into natural copy.
           any openai-compatible endpoint works (openai, groq, openrouter, ollama).
           {s?.aiEnabled ? (
-            <> <span className="text-emerald-400">on{s.aiModel ? ` — ${s.aiModel}` : ""}</span></>
+            <> <span className="text-signal">on{s.aiModel ? ` — ${s.aiModel}` : ""}</span></>
           ) : (
             <> <span className="text-zinc-600">off — no key set</span></>
           )}

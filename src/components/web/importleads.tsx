@@ -189,7 +189,7 @@ export function ImportLeads({
             )}
             {!rows.length && paste.trim() && (
               <div className="text-[11px] text-zinc-600">
-                nothing parsed locally — {aiOn ? "try [ ai sort ]" : "check the format"}
+                nothing parsed locally — {aiOn ? "try ai sort" : "check the format"}
               </div>
             )}
             {!paste.trim() && (
@@ -205,10 +205,10 @@ export function ImportLeads({
         </Btn>
         {aiOn && (
           <Btn disabled={!paste.trim()} onClick={aiSort}>
-            [ ai sort ]
+            ai sort
           </Btn>
         )}
-        <Btn onClick={() => fileRef.current?.click()}>[ upload csv ]</Btn>
+        <Btn onClick={() => fileRef.current?.click()}>upload csv</Btn>
         <input
           ref={fileRef}
           type="file"
@@ -222,7 +222,7 @@ export function ImportLeads({
       </div>
 
       {added && added.length > 0 && (
-        <div className="border-l-2 border-emerald-900/60 pl-3">
+        <div className="border-l border-hairline-strong pl-3">
           <div className="mb-1 flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider text-zinc-500">
               just added

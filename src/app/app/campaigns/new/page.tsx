@@ -120,7 +120,7 @@ export default function NewCampaign() {
 
   return (
     <div>
-      <PageHead title="New campaign" sub="sender → contacts → template → send">
+      <PageHead title="New campaign">
         <Link href="/app/campaigns" className="self-center text-sm text-zinc-500 hover:text-zinc-300">
           ← campaigns
         </Link>
@@ -140,7 +140,7 @@ export default function NewCampaign() {
         {/* 01 — sender */}
         <Card>
           <h3 className="micro mb-3 -mx-4 -mt-4 border-b border-hairline bg-compartment px-4 py-2 text-phosphor">
-            [ 01 / sender ]
+            sender
           </h3>
           <Sel
             label="smtp sender"
@@ -169,7 +169,7 @@ export default function NewCampaign() {
         {/* 02 — contacts */}
         <Card>
           <h3 className="micro mb-3 -mx-4 -mt-4 border-b border-hairline bg-compartment px-4 py-2 text-phosphor">
-            [ 02 / contacts ]
+            contacts
           </h3>
           <div className="mb-3 flex border-b border-hairline">
             {(["list", "paste"] as const).map((s) => (
@@ -222,7 +222,7 @@ export default function NewCampaign() {
         {/* 03 — content */}
         <Card>
           <h3 className="micro mb-3 -mx-4 -mt-4 border-b border-hairline bg-compartment px-4 py-2 text-phosphor">
-            [ 03 / content ]
+            content
           </h3>
           <Inp
             label="subject"
@@ -313,7 +313,7 @@ export default function NewCampaign() {
       {/* 04 — send */}
       <Card className="mt-4">
         <h3 className="micro mb-3 -mx-4 -mt-4 border-b border-hairline bg-compartment px-4 py-2 text-phosphor">
-          [ 04 / send options ]
+          send options
         </h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Inp

@@ -14,7 +14,7 @@ export default function Lists() {
 
   return (
     <div>
-      <PageHead title="Contacts" sub="add emails to a list — that's it" />
+      <PageHead title="Contacts" />
       <Err msg={msg} />
 
       <Card className="mb-4">
@@ -55,7 +55,7 @@ export default function Lists() {
               }
             }}
           >
-            [ create '{newPack.trim()}' ]
+            create '{newPack.trim()}'
           </Btn>
         ) : (
           <p className="text-xs text-zinc-600">pick a list above, or type a new list name</p>

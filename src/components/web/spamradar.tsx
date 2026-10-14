@@ -68,28 +68,17 @@ export function SpamRadar({
 
   const sevCls = (s: string) =>
     s === "critical" ? "text-red-400" : s === "warn" ? "text-amber-400" : "text-zinc-500";
-  const sevBorder = (s: string) =>
-    s === "critical" ? "#f87171" : s === "warn" ? "#fbbf24" : "#52525b";
-
   return (
-    <Card
-      className={
-        report.grade === "spammy"
-          ? "border-red-900/70"
-          : report.grade === "meh"
-            ? "border-amber-900/60"
-            : "border-emerald-900/60"
-      }
-    >
+    <Card>
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <h3 className="text-sm font-medium text-zinc-300">spam check</h3>
         <span
           className={`font-mono text-lg font-bold ${
             report.grade === "spammy"
-              ? "text-red-400"
+              ? "text-hazard"
               : report.grade === "meh"
                 ? "text-amber-400"
-                : "text-emerald-400"
+                : "text-signal"
           }`}
         >
           {report.score}
@@ -104,13 +93,13 @@ export function SpamRadar({
         <span className="ml-auto flex gap-2">
           {aiOn && onApply && (
             <>
-              <Btn onClick={aiJudge}>[ ai scan ]</Btn>
-              <Btn variant="primary" onClick={() => aiRewrite()}>[ ai rewrite ]</Btn>
+              <Btn onClick={aiJudge}>ai scan</Btn>
+              <Btn variant="primary" onClick={() => aiRewrite()}>ai rewrite</Btn>
             </>
           )}
           {onApply && fixable.length > 0 && (
             <Btn onClick={() => onApply(applyAllFixes(draft).draft)}>
-              [ fix all ({fixable.length}) ]
+              fix all ({fixable.length})
             </Btn>
           )}
         </span>
@@ -125,17 +114,17 @@ export function SpamRadar({
         </p>
       )}
       {aiIssues.map((i, n) => (
-        <div key={`ai-${n}`} className="mb-2 border-l-2 pl-2 text-xs" style={{ borderColor: sevBorder(i.severity) }}>
+        <div key={`ai-${n}`} className="mb-2 border-l border-hairline-strong pl-2 text-xs">
           <div className="flex items-start justify-between gap-2">
             <div className={sevCls(i.severity)}>
-              <span className="text-zinc-600">[ai] </span>
+              <span className="text-zinc-600">ai: </span>
               {i.message}
             </div>
             {onApply && (
               <Btn
                 onClick={() => aiRewrite(`${i.message} — ${i.fix}`)}
               >
-                [ fix ]
+                fix
               </Btn>
             )}
           </div>
@@ -148,8 +137,7 @@ export function SpamRadar({
           {report.issues.map((i: SpamIssue, n: number) => (
             <div
               key={n}
-              className="border-l-2 pl-2 text-xs"
-              style={{ borderColor: sevBorder(i.severity) }}
+              className="border-l border-hairline-strong pl-2 text-xs"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className={sevCls(i.severity)}>{i.message}</div>
@@ -160,7 +148,7 @@ export function SpamRadar({
                 )}
                 {onApply && !i.patch && aiOn && (
                   <Btn onClick={() => aiRewrite(`${i.message} — ${i.fix}`)}>
-                    [ ai fix ]
+                    ai fix
                   </Btn>
                 )}
               </div>
@@ -170,8 +158,8 @@ export function SpamRadar({
         </div>
       ) : (
         !aiIssues.length && (
-          <p className="text-xs text-emerald-400">
-            clean — nothing tripping filters. ship it.
+          <p className="text-xs text-signal">
+            clean — nothing tripping filters.
           </p>
         )
       )}
