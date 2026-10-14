@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "node -r ./scripts/exfat-fs-patch.cjs node_modules/next/dist/bin/next dev --turbopack",
-    "build": "node -r ./scripts/exfat-fs-patch.cjs node_modules/next/dist/bin/next build --turbopack",
+    "build": "node -r ./scripts/exfat-fs-patch.cjs node_modules/next/dist/bin/next build",
     "start": "node -r ./scripts/exfat-fs-patch.cjs node_modules/next/dist/bin/next start",
     "lint": "next lint"
   },
