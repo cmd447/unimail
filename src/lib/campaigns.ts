@@ -21,6 +21,7 @@ function toCampaign(id: string, d: FirebaseFirestore.DocumentData): Campaign {
     rateLimit: d.rateLimit ?? null,
     replyTo: d.replyTo ?? null,
     fromName: d.fromName ?? null,
+    priority: d.priority ?? null,
     batchSize: d.batchSize ?? null,
     batchSent: d.batchSent ?? 0,
     scheduledAt: d.scheduledAt?.toDate?.().toISOString() ?? null,
@@ -204,6 +205,44 @@ export async function requeueFailed(campaignId: string): Promise<number> {
   }
   if (n) {
     await db().collection(COL).doc(campaignId).update({ "counters.failed": 0 });
+  }
+  return n;
+}
+
+/**
+ * Requeue every non-inflight message — full resend of the blast.
+ * Sent/failed/skipped all go back to queued; counters + probe reset.
+ * (Suppressed contacts re-skip inside the send loop as normal.)
+ */
+export async function requeueAll(campaignId: string): Promise<number> {
+  const msgs = db().collection(COL).doc(campaignId).collection(MESSAGES);
+  let n = 0;
+  for (;;) {
+    const snap = await msgs
+      .where("status", "in", ["sent", "failed", "skipped"])
+      .limit(400)
+      .get();
+    if (snap.empty) break;
+    const batch = db().batch();
+    snap.docs.forEach((d) =>
+      batch.update(d.ref, {
+        status: "queued",
+        error: null,
+        claimedBy: null,
+        claimedAt: null,
+      }),
+    );
+    await batch.commit();
+    n += snap.size;
+  }
+  if (n) {
+    await db().collection(COL).doc(campaignId).update({
+      "counters.sent": 0,
+      "counters.failed": 0,
+      "counters.skipped": 0,
+      batchSent: 0,
+      probeSent: false,
+    });
   }
   return n;
 }

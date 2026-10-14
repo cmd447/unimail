@@ -27,8 +27,19 @@ export default function CampaignDetail() {
   const [statusFilter, setStatusFilter] = useState("");
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [preview, setPreview] = useState(false);
+  const profs = useFetch<{ profiles: any[] }>("/api/profiles");
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState({ subject: "", html: "", text: "" });
+  const [draft, setDraft] = useState({
+    subject: "",
+    html: "",
+    text: "",
+    profileId: "",
+    rateLimit: "",
+    batchSize: "",
+    fromName: "",
+    replyTo: "",
+    priority: "",
+  });
 
   const loadMsgs = useCallback(
     async (after?: string, status = statusFilter) => {
@@ -111,7 +122,7 @@ export default function CampaignDetail() {
         body: JSON.stringify({ action: "edit", ...draft }),
       });
       setEditing(false);
-      setMsg({ text: "letter updated — queued contacts get the new copy", ok: true });
+      setMsg({ text: "blast updated — queued contacts get the new copy + settings", ok: true });
       reload();
     } catch (e) {
       setMsg({ text: e instanceof Error ? e.message : "Failed", ok: false });
@@ -121,7 +132,7 @@ export default function CampaignDetail() {
   if (!c) return <p className="text-sm text-zinc-600">loading…</p>;
   const k = c.counters;
   const done = k.sent + k.failed + k.skipped;
-  const editable = !["completed", "cancelled"].includes(c.status);
+  const editable = c.status !== "sending";
 
   // preview merges like a real send — first queued contact, else a demo lead
   const sample = queued?.messages?.[0] ?? {
@@ -147,11 +158,21 @@ export default function CampaignDetail() {
         {editable && (
           <Btn
             onClick={() => {
-              setDraft({ subject: c.subject, html: c.html, text: c.text });
+              setDraft({
+                subject: c.subject,
+                html: c.html,
+                text: c.text,
+                profileId: c.profileId,
+                rateLimit: c.rateLimit ? String(c.rateLimit) : "",
+                batchSize: c.batchSize ? String(c.batchSize) : "",
+                fromName: c.fromName ?? "",
+                replyTo: c.replyTo ?? "",
+                priority: c.priority ?? "",
+              });
               setEditing((e) => !e);
             }}
           >
-            Edit letter
+            Edit
           </Btn>
         )}
         <Btn onClick={probe}>Test placement</Btn>
@@ -167,6 +188,15 @@ export default function CampaignDetail() {
             retry {k.failed} failed
           </Btn>
         )}
+        {["paused", "failed", "completed", "cancelled"].includes(c.status) &&
+          k?.total > 0 && (
+            <Btn
+              variant={["completed", "cancelled"].includes(c.status) ? "primary" : "suppress"}
+              onClick={() => confirm("resend to the whole list?") && act("rerun")}
+            >
+              send again
+            </Btn>
+          )}
         {c.status === "sending" && <Btn onClick={() => act("pause")}>Pause</Btn>}
         {c.status === "paused" && (
           <Btn variant="primary" onClick={() => act("resume")}>
@@ -222,12 +252,64 @@ export default function CampaignDetail() {
 
       {editing && (
         <Card className="mb-6">
-          <h2 className="mb-1 text-sm font-medium text-zinc-300">edit the letter</h2>
+          <h2 className="mb-1 text-sm font-medium text-zinc-300">edit the blast</h2>
           <p className="mb-3 text-xs text-zinc-500">
+            letter + sender + send options —{" "}
             {["sending", "paused"].includes(c.status)
               ? "applies to contacts still queued — already-sent copies are gone"
-              : "edits the copy this blast sends"}
+              : "then retry the failures or send again"}
           </p>
+          <div className="mb-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Sel
+              label="smtp sender"
+              value={draft.profileId}
+              onChange={(e) => setDraft({ ...draft, profileId: e.target.value })}
+            >
+              {profs.data?.profiles.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.fromEmail})
+                </option>
+              ))}
+            </Sel>
+            <Inp
+              label="send speed /min"
+              type="number"
+              inputMode="numeric"
+              value={draft.rateLimit}
+              onChange={(e) => setDraft({ ...draft, rateLimit: e.target.value })}
+              placeholder="sender's own"
+            />
+            <Inp
+              label="waves of (blank = all)"
+              type="number"
+              inputMode="numeric"
+              value={draft.batchSize}
+              onChange={(e) => setDraft({ ...draft, batchSize: e.target.value })}
+              placeholder="e.g. 50"
+            />
+            <Inp
+              label="from-name override"
+              value={draft.fromName}
+              onChange={(e) => setDraft({ ...draft, fromName: e.target.value })}
+              placeholder="sender's own"
+            />
+            <Inp
+              label="reply-to override"
+              type="email"
+              value={draft.replyTo}
+              onChange={(e) => setDraft({ ...draft, replyTo: e.target.value })}
+              placeholder="sender's own"
+            />
+            <Sel
+              label="priority"
+              value={draft.priority}
+              onChange={(e) => setDraft({ ...draft, priority: e.target.value })}
+            >
+              <option value="">normal (no headers)</option>
+              <option value="high">high (!)</option>
+              <option value="low">low</option>
+            </Sel>
+          </div>
           <div className="space-y-3">
             <Inp
               label="subject"
@@ -247,7 +329,7 @@ export default function CampaignDetail() {
               onChange={(e) => setDraft({ ...draft, text: e.target.value })}
             />
             <div className="flex gap-2">
-              <Btn variant="primary" onClick={saveEdit}>Save letter</Btn>
+              <Btn variant="primary" onClick={saveEdit}>Save</Btn>
               <Btn onClick={() => setEditing(false)}>Cancel</Btn>
             </div>
           </div>

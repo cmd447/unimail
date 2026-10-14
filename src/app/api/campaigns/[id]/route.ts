@@ -6,11 +6,12 @@ import {
   deleteCampaign,
   getCampaign,
   remainingQueued,
+  requeueAll,
   requeueFailed,
   setCampaignStatus,
-  updateCampaignContent,
 } from "@/lib/campaigns";
 import { db } from "@/lib/firebase/admin";
+import { getProfile } from "@/lib/profiles";
 import { expandCampaign } from "@/lib/campaigns";
 import { dispatchCloud, dispatchLocal, queueEnabled } from "@/lib/queue";
 
@@ -32,7 +33,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   return NextResponse.json({ campaign });
 }
 
-const ACTIONS = ["send", "pause", "resume", "cancel", "edit", "retry"] as const;
+const ACTIONS = ["send", "pause", "resume", "cancel", "edit", "retry", "rerun"] as const;
 type Action = (typeof ACTIONS)[number];
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
@@ -47,6 +48,12 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     subject?: string;
     html?: string;
     text?: string;
+    profileId?: string;
+    rateLimit?: number | string | null;
+    batchSize?: number | string | null;
+    fromName?: string | null;
+    replyTo?: string | null;
+    priority?: "high" | "low" | "" | null;
   };
   const { action } = body;
   if (!action || !ACTIONS.includes(action)) {
@@ -102,6 +109,26 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       await kick();
       break;
     }
+    case "rerun": {
+      if (campaign.status === "sending") {
+        return NextResponse.json({ error: "Already sending" }, { status: 409 });
+      }
+      const n = await requeueAll(id);
+      if (!n) {
+        return NextResponse.json({ error: "no contacts to resend" }, { status: 400 });
+      }
+      await db().collection("events").add({
+        campaignId: id,
+        campaignName: campaign.name,
+        email: "—",
+        status: "chain",
+        detail: `rerun — ${n} contact${n === 1 ? "" : "s"} requeued`,
+        at: FieldValue.serverTimestamp(),
+      });
+      await setCampaignStatus(id, "sending", null);
+      await kick();
+      break;
+    }
     case "cancel":
       if (["completed", "cancelled"].includes(campaign.status)) {
         return NextResponse.json({ error: "Already finished" }, { status: 409 });
@@ -109,20 +136,39 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       await setCampaignStatus(id, "cancelled");
       break;
     case "edit": {
-      if (["completed", "cancelled"].includes(campaign.status)) {
-        return NextResponse.json({ error: "Blast already finished" }, { status: 409 });
-      }
-      const subject = String(body.subject ?? "").trim();
-      const html = String(body.html ?? "");
+      const subject = String(body.subject ?? campaign.subject).trim();
+      const html = String(body.html ?? campaign.html);
       if (!subject || !html.trim()) {
         return NextResponse.json({ error: "need subject + html" }, { status: 400 });
       }
-      // only queued contacts pick this up — already-sent copies are gone
-      await updateCampaignContent(id, {
+      const patch: Record<string, unknown> = {
         subject,
         html,
-        text: String(body.text ?? ""),
-      });
+        text: String(body.text ?? campaign.text),
+      };
+      if (body.profileId && body.profileId !== campaign.profileId) {
+        const p = await getProfile(body.profileId);
+        if (!p) {
+          return NextResponse.json({ error: "unknown sender" }, { status: 400 });
+        }
+        patch.profileId = body.profileId;
+        // new sender = new placement question — refire the probe next send
+        patch.probeSent = false;
+      }
+      if ("rateLimit" in body) {
+        patch.rateLimit = body.rateLimit ? Number(body.rateLimit) : null;
+      }
+      if ("batchSize" in body) {
+        patch.batchSize = body.batchSize ? Number(body.batchSize) : null;
+      }
+      if ("fromName" in body) patch.fromName = body.fromName?.trim() || null;
+      if ("replyTo" in body) patch.replyTo = body.replyTo?.trim() || null;
+      if ("priority" in body) {
+        patch.priority =
+          body.priority === "high" || body.priority === "low" ? body.priority : null;
+      }
+      // only queued contacts pick letter edits up — already-sent copies are gone
+      await db().collection("campaigns").doc(id).update(patch);
       break;
     }
   }
