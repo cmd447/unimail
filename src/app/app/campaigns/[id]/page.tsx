@@ -156,8 +156,16 @@ export default function CampaignDetail() {
         )}
         <Btn onClick={probe}>Test placement</Btn>
         <Btn onClick={checkProbes}>Check placement</Btn>
-        {["draft", "scheduled", "failed"].includes(c.status) && (
+        {["draft", "scheduled"].includes(c.status) && (
           <Btn variant="primary" onClick={() => act("send")}>Send</Btn>
+        )}
+        {k?.failed > 0 && c.status !== "sending" && (
+          <Btn
+            variant={c.status === "failed" ? "primary" : "suppress"}
+            onClick={() => act("retry")}
+          >
+            retry {k.failed} failed
+          </Btn>
         )}
         {c.status === "sending" && <Btn onClick={() => act("pause")}>Pause</Btn>}
         {c.status === "paused" && (

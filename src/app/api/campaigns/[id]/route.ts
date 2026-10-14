@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { requireApiSession } from "@/lib/api";
+import { FieldValue } from "firebase-admin/firestore";
 import {
   deleteCampaign,
   getCampaign,
   remainingQueued,
+  requeueFailed,
   setCampaignStatus,
   updateCampaignContent,
 } from "@/lib/campaigns";
+import { db } from "@/lib/firebase/admin";
 import { expandCampaign } from "@/lib/campaigns";
 import { dispatchCloud, dispatchLocal, queueEnabled } from "@/lib/queue";
 
@@ -29,7 +32,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   return NextResponse.json({ campaign });
 }
 
-const ACTIONS = ["send", "pause", "resume", "cancel", "edit"] as const;
+const ACTIONS = ["send", "pause", "resume", "cancel", "edit", "retry"] as const;
 type Action = (typeof ACTIONS)[number];
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
@@ -57,7 +60,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
 
   switch (action) {
     case "send": {
-      if (!["draft", "failed", "scheduled"].includes(campaign.status)) {
+      if (!["draft", "scheduled"].includes(campaign.status)) {
         return NextResponse.json({ error: `Cannot send from ${campaign.status}` }, { status: 409 });
       }
       if (!campaign.counters.total) await expandCampaign(id, campaign.listId);
@@ -75,6 +78,26 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       if (campaign.status !== "paused") {
         return NextResponse.json({ error: "Not paused" }, { status: 409 });
       }
+      await setCampaignStatus(id, "sending", null);
+      await kick();
+      break;
+    }
+    case "retry": {
+      if (campaign.status === "sending") {
+        return NextResponse.json({ error: "Already sending" }, { status: 409 });
+      }
+      const n = await requeueFailed(id);
+      if (!n) {
+        return NextResponse.json({ error: "nothing failed to retry" }, { status: 400 });
+      }
+      await db().collection("events").add({
+        campaignId: id,
+        campaignName: campaign.name,
+        email: "—",
+        status: "chain",
+        detail: `retry — ${n} failed contact${n === 1 ? "" : "s"} requeued`,
+        at: FieldValue.serverTimestamp(),
+      });
       await setCampaignStatus(id, "sending", null);
       await kick();
       break;

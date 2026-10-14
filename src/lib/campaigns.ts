@@ -180,6 +180,34 @@ export async function campaignMessages(
   };
 }
 
+/**
+ * Flip every failed message back to queued so the dispatch chain retries it.
+ * Keeps `attempts` history; clears the stale error + claim fields.
+ */
+export async function requeueFailed(campaignId: string): Promise<number> {
+  const msgs = db().collection(COL).doc(campaignId).collection(MESSAGES);
+  let n = 0;
+  for (;;) {
+    const snap = await msgs.where("status", "==", "failed").limit(400).get();
+    if (snap.empty) break;
+    const batch = db().batch();
+    snap.docs.forEach((d) =>
+      batch.update(d.ref, {
+        status: "queued",
+        error: null,
+        claimedBy: null,
+        claimedAt: null,
+      }),
+    );
+    await batch.commit();
+    n += snap.size;
+  }
+  if (n) {
+    await db().collection(COL).doc(campaignId).update({ "counters.failed": 0 });
+  }
+  return n;
+}
+
 export async function remainingQueued(campaignId: string): Promise<number> {
   const snap = await db()
     .collection(COL)
