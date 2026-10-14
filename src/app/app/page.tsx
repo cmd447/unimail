@@ -12,7 +12,7 @@ export default function Overview() {
   const events = useFetch<{ events: any[] }>("/api/events?limit=8");
   const settings = useFetch<{ settings: any }>("/api/settings");
 
-  const active = profiles.data?.profiles.find((p) => p.isActive);
+  const senders = profiles.data?.profiles ?? [];
   const contacts = lists.data?.lists.reduce((s, l) => s + (l.count || 0), 0) ?? 0;
 
   const steps = [
@@ -93,32 +93,32 @@ export default function Overview() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-zinc-300">active sender</h2>
+            <h2 className="text-sm font-medium text-zinc-300">senders</h2>
             <Link href="/app/profiles" className="text-xs text-zinc-500 hover:text-zinc-300">
               all senders →
             </Link>
           </div>
-          {active ? (
-            <div className="space-y-1 text-sm">
-              <div className="font-medium text-zinc-300">
-                {active.name}
-                {active.isDefault && (
-                  <Badge color="blue"> default</Badge>
-                )}
-              </div>
-              <div className="text-zinc-500">
-                {active.host}:{active.port} · {active.encryption}
-              </div>
-              <div className="text-zinc-500">from: {active.fromEmail}</div>
-              <div>
-                {active.lastError ? (
-                  <Badge color="red">error: {active.lastError.slice(0, 50)}</Badge>
-                ) : active.lastVerifiedAt ? (
-                  <Badge color="green">verified</Badge>
-                ) : (
-                  <Badge>unverified</Badge>
-                )}
-              </div>
+          {senders.length ? (
+            <div className="space-y-2 text-sm">
+              {senders.slice(0, 4).map((p) => (
+                <div key={p.id} className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="font-medium text-zinc-300">{p.name}</span>
+                    <span className="ml-2 text-xs text-zinc-500">{p.fromEmail}</span>
+                  </div>
+                  {p.lastError ? (
+                    <Badge color="red">error</Badge>
+                  ) : p.lastVerifiedAt ? (
+                    <Badge color="green">verified</Badge>
+                  ) : (
+                    <Badge>unverified</Badge>
+                  )}
+                </div>
+              ))}
+              {senders.length > 4 && (
+                <div className="text-xs text-zinc-600">+{senders.length - 4} more</div>
+              )}
+              <p className="text-xs text-zinc-600">pick which sender when you compose or blast</p>
             </div>
           ) : (
             <p className="text-sm text-zinc-500">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, useFetch } from "@/components/web/api";
 import { Btn, Card, Inp, Note, PageHead, Sel } from "@/components/web/ui";
 
@@ -18,10 +18,19 @@ export default function Compose() {
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [probes, setProbes] = useState<any[]>([]);
+  const [senderId, setSenderId] = useState("");
   const areaRef = useRef<HTMLTextAreaElement>(null);
 
-  const active = pData?.profiles.find((p) => p.isActive) ??
-    pData?.profiles.find((p) => p.isDefault);
+  // remember the picked sender — explicit choice, not auto-default
+  useEffect(() => {
+    const saved = localStorage.getItem("unimail_sender");
+    if (saved) setSenderId(saved);
+  }, []);
+  const pick = (id: string) => {
+    setSenderId(id);
+    localStorage.setItem("unimail_sender", id);
+  };
+  const active = pData?.profiles.find((p) => p.id === senderId);
   const insertTag = (t: string) => {
     const el = areaRef.current;
     const tag = `{{${t}}}`;
@@ -200,9 +209,19 @@ export default function Compose() {
             <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
               send it
             </h3>
-            <p className="mb-2 text-xs text-zinc-600">
-              via {active ? `${active.name} (${active.fromEmail})` : "no sender active"}
-            </p>
+            <Sel
+              label="via sender"
+              className="mb-2"
+              value={senderId}
+              onChange={(e) => pick(e.target.value)}
+            >
+              <option value="">— pick a sender —</option>
+              {pData?.profiles.map((p: any) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.fromEmail})
+                </option>
+              ))}
+            </Sel>
             <div className="space-y-2">
               <input
                 type="email"

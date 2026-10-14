@@ -19,7 +19,6 @@ export default function WebShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const { data } = useFetch<{ profiles: any[] }>("/api/profiles");
-  const active = data?.profiles?.find((p) => p.isActive);
 
   // Preload everything once the shell mounts — page chunks prefetched,
   // shared GETs warmed into the client cache. Navigations open instantly.
@@ -65,9 +64,9 @@ export default function WebShell({ children }: { children: React.ReactNode }) {
           UniMail
         </Link>
         <div className="hidden flex-1 items-center px-3 text-[11px] text-zinc-500 sm:flex">
-          {active
-            ? `sender: ${active.name} <${active.fromEmail}>`
-            : "no sender active"}
+          {data?.profiles?.length
+            ? `${data.profiles.length} sender${data.profiles.length === 1 ? "" : "s"} ready`
+            : "no senders yet"}
         </div>
         <div className="flex-1 sm:hidden" />
         <Link

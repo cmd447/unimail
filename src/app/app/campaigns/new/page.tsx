@@ -42,10 +42,7 @@ export default function NewCampaign() {
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const sender =
-    profiles.data?.profiles.find((p) => p.id === form.profileId) ??
-    profiles.data?.profiles.find((p) => p.isActive) ??
-    profiles.data?.profiles.find((p) => p.isDefault);
+  const sender = profiles.data?.profiles.find((p) => p.id === form.profileId);
   const list = lists.data?.lists.find((l) => l.id === form.listId);
   const tpl = templates.data?.templates.find((t) => t.id === form.templateId);
 
@@ -142,13 +139,13 @@ export default function NewCampaign() {
           </h3>
           <Sel
             label="smtp sender"
-            value={sender?.id ?? ""}
+            value={form.profileId}
             onChange={(e) => setForm({ ...form, profileId: e.target.value })}
           >
             <option value="">— pick —</option>
             {profiles.data?.profiles.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name}{p.isActive ? " (active)" : ""}
+                {p.name} ({p.fromEmail})
               </option>
             ))}
           </Sel>

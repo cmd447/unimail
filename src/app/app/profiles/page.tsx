@@ -116,11 +116,7 @@ export default function Profiles() {
         {(data?.profiles ?? []).map((p) => (
           <Fragment key={p.id}>
           <tr className="text-zinc-300">
-            <td className="px-3 py-2 font-medium">
-              {p.name}
-              {p.isDefault && <Badge color="blue"> default</Badge>}
-              {p.isActive && <Badge color="green"> active</Badge>}
-            </td>
+            <td className="px-3 py-2 font-medium">{p.name}</td>
             <td className="px-3 py-2 text-zinc-500">
               {p.host}:{p.port} · {p.encryption}
             </td>
@@ -136,9 +132,6 @@ export default function Profiles() {
             </td>
             <td className="px-3 py-2">
               <div className="flex flex-wrap justify-end gap-1.5">
-                <Btn onClick={() => act(() => api("/api/profiles/select", { method: "POST", body: JSON.stringify({ id: p.id }) }))}>
-                  use
-                </Btn>
                 <Btn
                   onClick={() =>
                     act(async () => {
@@ -154,11 +147,6 @@ export default function Profiles() {
                   verify
                 </Btn>
                 <Btn onClick={() => check(p.id)}>spam check</Btn>
-                {!p.isDefault && (
-                  <Btn onClick={() => act(() => api(`/api/profiles/${p.id}`, { method: "PATCH", body: JSON.stringify({ isDefault: true }) }))}>
-                    set default
-                  </Btn>
-                )}
                 <Btn
                   onClick={() => {
                     setForm({ ...EMPTY, ...p, password: "" });
