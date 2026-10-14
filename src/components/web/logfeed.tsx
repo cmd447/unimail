@@ -17,7 +17,7 @@ export const LOG_COLOR: Record<string, string> = {
 
 const ROW = ({ k, v }: { k: string; v: unknown }) =>
   v === null || v === undefined || v === "" || (Array.isArray(v) && !v.length) ? null : (
-    <div className="grid grid-cols-[130px_1fr] gap-2 border-b border-hairline py-1 text-[11px]">
+    <div className="grid gap-0 border-b border-hairline py-1 text-[11px] sm:grid-cols-[130px_1fr] sm:gap-2">
       <span className="text-zinc-600">{k}</span>
       <span className="break-all text-zinc-300">
         {typeof v === "object" ? JSON.stringify(v) : String(v)}
@@ -150,7 +150,7 @@ export function LogFeed({ events }: { events: any[] }) {
               <span className={`font-bold uppercase ${LOG_COLOR[e.status] ?? "text-zinc-400"}`}>
                 {e.status}
               </span>
-              <span className="text-zinc-200">{e.email}</span>
+              <span className="break-all text-zinc-200">{e.email}</span>
               {e.campaignName && e.campaignName !== "-" && (
                 <span className="text-zinc-500">{e.campaignName}</span>
               )}

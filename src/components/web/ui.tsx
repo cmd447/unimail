@@ -58,7 +58,7 @@ export function Btn({
         : "border-hairline-strong text-dim hover:border-dim hover:text-phosphor";
   return (
     <button
-      className={`inline-flex items-center gap-1.5 border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.08em] transition-colors duration-150 focus-visible:outline-1 focus-visible:outline-dim disabled:cursor-not-allowed disabled:opacity-40 ${cls}`}
+      className={`inline-flex items-center gap-1.5 border px-3 py-2 font-mono text-[11px] uppercase tracking-[0.08em] transition-colors duration-150 focus-visible:outline-1 focus-visible:outline-dim disabled:cursor-not-allowed disabled:opacity-40 sm:py-1.5 ${cls}`}
       disabled={disabled || pend}
       onClick={async (e) => {
         const r = onClick?.(e) as unknown;

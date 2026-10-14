@@ -83,7 +83,7 @@ export default function Overview() {
             <span className={s.done ? "text-zinc-400" : "font-medium text-zinc-200"}>
               {s.label}
             </span>
-            <span className="ml-auto text-[11px] text-zinc-600">{s.why}</span>
+            <span className="ml-auto hidden text-[11px] text-zinc-600 sm:block">{s.why}</span>
           </Link>
         ))}
       </Card>

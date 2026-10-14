@@ -80,7 +80,7 @@ export default function WebShell({ children }: { children: React.ReactNode }) {
         </button>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-col md:flex-row">
         {/* sidebar */}
         <aside className="sticky top-11 hidden h-[calc(100dvh-2.75rem)] w-52 shrink-0 flex-col border-r border-hairline md:flex">
           <nav className="flex flex-col">
@@ -108,7 +108,7 @@ export default function WebShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* mobile nav row */}
-        <nav className="flex w-full overflow-x-auto border-b border-hairline md:hidden">
+        <nav className="sticky top-11 z-30 flex w-full overflow-x-auto border-b border-hairline bg-substrate md:hidden">
           {NAV.map(({ label, href }, i) => (
             <Link
               key={href}
