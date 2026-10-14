@@ -1,7 +1,18 @@
+import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { decrypt } from "@/lib/crypto";
 import { getProfile } from "@/lib/profiles";
 import type { StoredProfile } from "@/lib/types";
+
+// Strip the Nodemailer MIME fingerprint ("--_NmP-…-Part_N").
+// Every spam-filter database has this boundary prefix cataloged as
+// "automated bulk tool". Replace with a generic format that matches
+// Java Mail / Outlook / many MUAs — not fingerprinted to any one library.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const MimeNode = require("nodemailer/lib/mime-node");
+MimeNode.prototype._generateBoundary = function () {
+  return "----=_Part_" + crypto.randomBytes(12).toString("hex");
+};
 
 export function makeTransport(profile: StoredProfile, pool = false) {
   // EHLO hostname must match the sending domain — os.hostname() leaks
@@ -27,6 +38,27 @@ export function fromHeader(p: StoredProfile) {
   return p.fromName ? `"${p.fromName.replace(/"/g, "")}" <${p.fromEmail}>` : p.fromEmail;
 }
 
+/**
+ * Wrap bare HTML in a proper email document structure if missing.
+ * Bare `<p>hi</p>` without DOCTYPE/body looks like a quick script;
+ * a full document looks like a real email client sent it.
+ */
+export function normalizeHtml(html: string): string {
+  if (!html) return html;
+  const lower = html.toLowerCase();
+  // already has DOCTYPE or full <html…><body structure — leave it alone
+  if (lower.includes("<!doctype") || (lower.includes("<html") && lower.includes("<body"))) {
+    return html;
+  }
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;">
+${html}
+</body>
+</html>`;
+}
+
 export async function sendMail(
   profileId: string,
   opts: {
@@ -45,6 +77,7 @@ export async function sendMail(
       from: fromHeader(profile),
       replyTo: profile.replyTo || undefined,
       ...opts,
+      ...(opts.html && { html: normalizeHtml(opts.html) }),
     });
   } finally {
     transport.close();

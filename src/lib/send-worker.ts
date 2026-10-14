@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { db } from "@/lib/firebase/admin";
 import { getCampaign, remainingQueued, setCampaignStatus } from "@/lib/campaigns";
 import { getProfile } from "@/lib/profiles";
-import { fromHeader, makeTransport } from "@/lib/mailer";
+import { fromHeader, makeTransport, normalizeHtml } from "@/lib/mailer";
 import { mergeData, renderMerge } from "@/lib/render";
 import { suppressedSet } from "@/lib/suppressions";
 import { getSettings } from "@/lib/settings";
@@ -169,7 +169,7 @@ export async function processBatch(campaignId: string) {
         replyTo,
         to: settings.seedEmail,
         subject: renderMerge(campaign.subject, pdata),
-        html: renderMerge(campaign.html, pdata),
+        html: normalizeHtml(renderMerge(campaign.html, pdata)),
         text: renderMerge(campaign.text, pdata),
         headers: {
           "List-Unsubscribe": `<${unsubFooter(appUrl, campaignId, "probe").api}>`,
@@ -210,9 +210,10 @@ export async function processBatch(campaignId: string) {
         ...mergeData(m),
         unsubscribe_url: unsub.url,
       };
-      const html = /\{\{\s*unsubscribe_url\s*\}\}/.test(campaign.html)
+      const rawHtml = /\{\{\s*unsubscribe_url\s*\}\}/.test(campaign.html)
         ? renderMerge(campaign.html, data)
         : renderMerge(campaign.html, data) + unsub.html;
+      const html = normalizeHtml(rawHtml);
 
       const subject = renderMerge(campaign.subject, data);
       const text = renderMerge(campaign.text, data);
