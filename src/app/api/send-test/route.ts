@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const { error } = await requireApiSession();
   if (error) return error;
   const body = await req.json().catch(() => ({}));
-  const { profileId, to, subject, html, text, firstName, lastName, plainOnly } = body;
+  const { profileId, to, subject, html, text, firstName, lastName, plainOnly, fromName, replyTo } = body;
 
   if (!profileId || !to || !subject) {
     return NextResponse.json(
@@ -46,6 +46,8 @@ export async function POST(req: NextRequest) {
       subject: renderMerge(subject, data),
       ...(plainOnly ? {} : { html: renderedHtml }),
       text: plainText,
+      ...(fromName && { fromName }),
+      ...(replyTo && { replyTo }),
     });
     return NextResponse.json({
       ok: true,

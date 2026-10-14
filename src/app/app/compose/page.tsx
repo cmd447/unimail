@@ -14,6 +14,7 @@ export default function Compose() {
   const [tab, setTab] = useState<"edit" | "preview" | "text">("edit");
   const [to, setTo] = useState("");
   const [rcpt, setRcpt] = useState({ firstName: "", lastName: "" });
+  const [overrides, setOverrides] = useState({ fromName: "", replyTo: "" });
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [probes, setProbes] = useState<any[]>([]);
@@ -98,6 +99,8 @@ export default function Compose() {
           ...rcpt,
           subject: draft.subject,
           plainOnly: isPlain,
+          ...(overrides.fromName && { fromName: overrides.fromName }),
+          ...(overrides.replyTo && { replyTo: overrides.replyTo }),
           ...(isPlain
             ? { text: draft.text }
             : { html: draft.html }), // text derived server-side from html
@@ -242,6 +245,24 @@ export default function Compose() {
               </div>
               <p className="text-[11px] text-zinc-600">
                 names feed {"{{first_name}}"} / {"{{name}}"} — blank = guessed from the email
+              </p>
+              <div className="flex gap-2">
+                <input
+                  placeholder="from name"
+                  value={overrides.fromName}
+                  onChange={(e) => setOverrides({ ...overrides, fromName: e.target.value })}
+                  className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
+                />
+                <input
+                  placeholder="reply-to"
+                  type="email"
+                  value={overrides.replyTo}
+                  onChange={(e) => setOverrides({ ...overrides, replyTo: e.target.value })}
+                  className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
+                />
+              </div>
+              <p className="text-[11px] text-zinc-600">
+                blank = sender's own name / reply-to
               </p>
               <p className="text-[11px] text-zinc-500">
                 {tab === "text"

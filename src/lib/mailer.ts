@@ -67,16 +67,21 @@ export async function sendMail(
     html?: string; // omit for a plain-text-only message
     text: string;
     headers?: Record<string, string>;
+    fromName?: string; // override the profile's display name
+    replyTo?: string; // override the profile's reply-to
   },
 ) {
   const profile = await getProfile(profileId);
   if (!profile) throw new Error("SMTP profile not found");
   const transport = makeTransport(profile);
   try {
+    const { fromName, replyTo, ...mailOpts } = opts;
     return await transport.sendMail({
-      from: fromHeader(profile),
-      replyTo: profile.replyTo || undefined,
-      ...opts,
+      from: fromName
+        ? `"${fromName.replace(/"/g, "")}" <${profile.fromEmail}>`
+        : fromHeader(profile),
+      replyTo: replyTo || profile.replyTo || undefined,
+      ...mailOpts,
       ...(opts.html && { html: normalizeHtml(opts.html) }),
     });
   } finally {
