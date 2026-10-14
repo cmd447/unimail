@@ -28,7 +28,7 @@ export async function sendMail(
   opts: {
     to: string;
     subject: string;
-    html: string;
+    html?: string; // omit for a plain-text-only message
     text: string;
     headers?: Record<string, string>;
   },

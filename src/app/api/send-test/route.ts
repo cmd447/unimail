@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/api";
 import { sendMail } from "@/lib/mailer";
-import { mergeData, renderMerge } from "@/lib/render";
+import { htmlToText, mergeData, renderMerge } from "@/lib/render";
 
 // one-to-one send — merge tags resolve against the actual recipient,
 // falling back to names guessed from the email local part
@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const { error } = await requireApiSession();
   if (error) return error;
   const body = await req.json().catch(() => ({}));
-  const { profileId, to, subject, html, text, firstName, lastName } = body;
+  const { profileId, to, subject, html, text, firstName, lastName, plainOnly } = body;
 
   if (!profileId || !to || !subject || !html) {
     return NextResponse.json(
@@ -25,11 +25,12 @@ export async function POST(req: NextRequest) {
   };
 
   try {
+    const plainText = renderMerge(text ?? "", data) || htmlToText(renderMerge(html, data));
     const info = await sendMail(profileId, {
       to,
       subject: renderMerge(subject, data),
-      html: renderMerge(html, data),
-      text: renderMerge(text ?? "", data),
+      ...(plainOnly ? {} : { html: renderMerge(html, data) }),
+      text: plainText,
     });
     return NextResponse.json({
       ok: true,
