@@ -7,7 +7,7 @@ import { api, useFetch } from "@/components/web/api";
 import { Btn, Card, Inp, Note, PageHead, Sel } from "@/components/web/ui";
 import { importRows } from "@/components/web/importleads";
 import { parsePaste } from "@/lib/parseleads";
-import { extractTags } from "@/lib/render";
+import { htmlToText, extractTags } from "@/lib/render";
 import { spamReport } from "@/lib/spamcheck";
 
 const KV = ({ k, v }: { k: string; v: unknown }) =>
@@ -30,12 +30,13 @@ export default function NewCampaign() {
   const router = useRouter();
   const profiles = useFetch<{ profiles: any[] }>("/api/profiles");
   const lists = useFetch<{ lists: any[] }>("/api/lists");
-  const templates = useFetch<{ templates: any[] }>("/api/templates");
   const [form, setForm] = useState({
-    name: "", profileId: "", listId: "", templateId: "",
+    name: "", profileId: "", listId: "",
     subject: "", rateLimit: "", replyTo: "", fromName: "", scheduledAt: "",
     batchSize: "",
   });
+  const [content, setContent] = useState({ html: "", text: "" });
+  const [contentTab, setContentTab] = useState<"html" | "preview" | "plain">("html");
   const [leadSrc, setLeadSrc] = useState<"list" | "paste">("list");
   const [paste, setPaste] = useState("");
   const [testTo, setTestTo] = useState("");
@@ -44,30 +45,31 @@ export default function NewCampaign() {
 
   const sender = profiles.data?.profiles.find((p) => p.id === form.profileId);
   const list = lists.data?.lists.find((l) => l.id === form.listId);
-  const tpl = templates.data?.templates.find((t) => t.id === form.templateId);
 
   const pastedRows = leadSrc === "paste" ? parsePaste(paste) : [];
   const leadCount = leadSrc === "list" ? (list?.count ?? 0) : pastedRows.length;
   const effRate = parseInt(form.rateLimit, 10) || sender?.rateLimit || 60;
   const eta = fmtEta(leadCount, effRate);
-  const subject = form.subject || tpl?.subject || "";
-  const report = tpl ? spamReport(subject, tpl.html, tpl.text ?? "") : null;
-  const tags = tpl ? extractTags(`${subject} ${tpl.html}`) : [];
+  const subject = form.subject;
+  const report = content.html ? spamReport(subject, content.html, content.text) : null;
+  const tags = content.html ? extractTags(`${subject} ${content.html}`) : [];
 
-  const ready = form.name && form.templateId && sender && leadCount > 0;
+  const ready = form.name && form.subject && (content.html || content.text) && sender && leadCount > 0;
 
   const testFire = async () => {
-    if (!testTo || !tpl || !sender) return;
+    if (!testTo || !sender || !subject || (!content.html && !content.text)) return;
     setMsg(null);
+    const isPlain = contentTab === "plain";
     try {
       const d = await api("/api/send-test", {
         method: "POST",
         body: JSON.stringify({
-          profileId: sender.id, to: testTo,
-          subject, html: tpl.html, text: tpl.text,
+          profileId: sender.id, to: testTo, subject,
+          plainOnly: isPlain,
+          ...(isPlain ? { text: content.text } : { html: content.html }),
         }),
       });
-      setMsg(d.ok ? { text: `test sent to ${testTo} — ${d.response ?? "accepted"}`, ok: true } : { text: `test failed: ${d.error}`, ok: false });
+      setMsg(d.ok ? { text: `test sent ${d.mode ?? ""} to ${testTo} — ${d.response ?? "accepted"}`, ok: true } : { text: `test failed: ${d.error}`, ok: false });
     } catch (e) {
       setMsg({ text: e instanceof Error ? e.message : "test failed", ok: false });
     }
@@ -90,14 +92,16 @@ export default function NewCampaign() {
         const r = await importRows(listId, pastedRows, () => {});
         if (!r.added) throw new Error("pasted contacts all duped/failed — nothing to hit");
       }
+      const blastText = content.text || htmlToText(content.html);
       const d = await api("/api/campaigns", {
         method: "POST",
         body: JSON.stringify({
           name: form.name,
           profileId: sender!.id,
           listId,
-          templateId: form.templateId,
-          subject: form.subject || undefined,
+          subject: form.subject,
+          html: content.html || undefined,
+          text: blastText || undefined,
           rateLimit: form.rateLimit ? parseInt(form.rateLimit, 10) : undefined,
           batchSize: form.batchSize ? parseInt(form.batchSize, 10) : undefined,
           replyTo: form.replyTo || undefined,
@@ -203,63 +207,91 @@ export default function NewCampaign() {
           )}
         </Card>
 
-        {/* 03 — template */}
+        {/* 03 — content */}
         <Card>
           <h3 className="mb-2 border-b border-zinc-800 pb-1 text-xs uppercase tracking-wider text-zinc-500">
-            03 · template
+            03 · content
           </h3>
-          <Sel
-            label="template"
-            value={form.templateId}
-            onChange={(e) => setForm({ ...form, templateId: e.target.value })}
-          >
-            <option value="">— pick —</option>
-            {templates.data?.templates.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
+          <Inp
+            label="subject"
+            value={form.subject}
+            onChange={(e) => setForm({ ...form, subject: e.target.value })}
+            placeholder="subject line — {{first_name}} works"
+          />
+          <div className="mt-3 flex gap-1 border-b border-zinc-800 pb-2">
+            {(["html", "preview", "plain"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setContentTab(t)}
+                className={`px-2.5 py-1 text-xs capitalize ${
+                  contentTab === t ? "bg-zinc-800 text-zinc-300" : "text-zinc-500"
+                }`}
+              >
+                {t}
+              </button>
             ))}
-          </Sel>
-          {tpl && (
-            <>
-              <Inp
-                className="mt-2"
-                label="subject override (blank = template's own)"
-                value={form.subject}
-                onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                placeholder={tpl.subject}
-              />
-              <div className="mt-2 px-0">
-                <KV k="spam score" v={
-                  report ? `${report.score}/100 — ${report.grade === "clean" ? "looks clean" : report.grade === "meh" ? "sketchy" : "spam-bound"}` : "—"
-                } />
-                <KV k="merges" v={tags.length ? tags.map((t) => `{{${t}}}`).join(" ") : "none"} />
-                <KV k="size" v={`${Math.round(new Blob([tpl.html]).size / 1024)}KB html`} />
-              </div>
-              {report && report.issues.length > 0 && (
-                <div className="mt-2 max-h-28 space-y-1 overflow-auto text-[11px]">
-                  {report.issues.slice(0, 5).map((i, n) => (
-                    <div
-                      key={n}
-                      className={
-                        i.severity === "critical"
-                          ? "text-red-400"
-                          : i.severity === "warn"
-                            ? "text-amber-400"
-                            : "text-zinc-500"
-                      }
-                    >
-                      [{i.severity}] {i.message}
-                    </div>
-                  ))}
-                  {report.issues.length > 5 && (
-                    <div className="text-zinc-600">+{report.issues.length - 5} more — open the template to fix them</div>
-                  )}
+          </div>
+          {contentTab === "html" && (
+            <textarea
+              value={content.html}
+              onChange={(e) =>
+                setContent((c) => ({
+                  ...c,
+                  html: e.target.value,
+                  text: c.text || htmlToText(e.target.value),
+                }))
+              }
+              rows={10}
+              spellCheck={false}
+              className="mt-2 w-full border border-zinc-700 bg-black p-3 font-mono text-[13px] text-zinc-300 outline-none focus:border-zinc-500"
+              placeholder="paste your html here…"
+            />
+          )}
+          {contentTab === "preview" && (
+            <div
+              className="mt-2 max-h-48 overflow-auto border border-zinc-800 bg-white p-2 text-[11px] text-black"
+              dangerouslySetInnerHTML={{ __html: content.html }}
+            />
+          )}
+          {contentTab === "plain" && (
+            <textarea
+              value={content.text}
+              onChange={(e) => setContent((c) => ({ ...c, text: e.target.value }))}
+              rows={10}
+              spellCheck={false}
+              className="mt-2 w-full border border-zinc-700 bg-black p-3 font-mono text-[13px] text-zinc-300 outline-none focus:border-zinc-500"
+              placeholder="type or paste your plain-text message…"
+            />
+          )}
+          {content.html && (
+            <div className="mt-2 px-0">
+              <KV k="spam score" v={
+                report ? `${report.score}/100 — ${report.grade === "clean" ? "looks clean" : report.grade === "meh" ? "sketchy" : "spam-bound"}` : "—"
+              } />
+              <KV k="merges" v={tags.length ? tags.map((t) => `{{${t}}}`).join(" ") : "none"} />
+              <KV k="size" v={`${Math.round(new Blob([content.html]).size / 1024)}KB html`} />
+            </div>
+          )}
+          {report && report.issues.length > 0 && (
+            <div className="mt-2 max-h-28 space-y-1 overflow-auto text-[11px]">
+              {report.issues.slice(0, 5).map((i, n) => (
+                <div
+                  key={n}
+                  className={
+                    i.severity === "critical"
+                      ? "text-red-400"
+                      : i.severity === "warn"
+                        ? "text-amber-400"
+                        : "text-zinc-500"
+                  }
+                >
+                  [{i.severity}] {i.message}
                 </div>
+              ))}
+              {report.issues.length > 5 && (
+                <div className="text-zinc-600">+{report.issues.length - 5} more</div>
               )}
-              <div
-                className="mt-2 max-h-40 overflow-auto border border-zinc-800 bg-white p-2 text-[11px] text-black"
-                dangerouslySetInnerHTML={{ __html: tpl.html }}
-              />
-            </>
+            </div>
           )}
         </Card>
       </div>
@@ -334,7 +366,7 @@ export default function NewCampaign() {
             placeholder="you@yourmail.com"
             className="w-56"
           />
-          <Btn disabled={!testTo || !tpl || !sender} onClick={testFire}>[ send test ]</Btn>
+          <Btn disabled={!testTo || !sender || !subject || (!content.html && !content.text)} onClick={testFire}>[ send test ]</Btn>
         </div>
 
         <div className="mt-4 flex gap-2 border-t border-zinc-800 pt-3">
@@ -346,7 +378,7 @@ export default function NewCampaign() {
           )}
           {!ready && (
             <span className="self-center text-[11px] text-zinc-600">
-              needs: name{!sender && " + sender"}{!form.templateId && " + template"}{!leadCount && " + contacts"}
+              needs: name{!form.subject && " + subject"}{!sender && " + sender"}{!(content.html || content.text) && " + content"}{!leadCount && " + contacts"}
             </span>
           )}
         </div>

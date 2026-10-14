@@ -9,7 +9,6 @@ import {
   setCampaignStatus,
 } from "@/lib/campaigns";
 import { getList } from "@/lib/lists";
-import { getTemplate } from "@/lib/templates";
 import { dispatchCloud, dispatchLocal, queueEnabled } from "@/lib/queue";
 
 export async function GET() {
@@ -22,29 +21,35 @@ export async function POST(req: NextRequest) {
   const { error } = await requireApiSession();
   if (error) return error;
   const body = await req.json().catch(() => ({}));
-  const { name, profileId, listId, templateId, sendNow, scheduledAt, subject, rateLimit, replyTo, fromName, batchSize } = body as {
+  const { name, profileId, listId, sendNow, scheduledAt, subject, html, text, rateLimit, replyTo, fromName, batchSize } = body as {
     name?: string;
     profileId?: string;
     listId?: string;
-    templateId?: string;
     sendNow?: boolean;
     scheduledAt?: string;
     subject?: string;
+    html?: string;
+    text?: string;
     rateLimit?: number;
     replyTo?: string;
     fromName?: string;
     batchSize?: number;
   };
 
-  if (!name || !profileId || !listId || !templateId) {
+  if (!name || !profileId || !listId || !subject) {
     return NextResponse.json(
-      { error: "Missing name/profileId/listId/templateId" },
+      { error: "Missing name/profileId/listId/subject" },
+      { status: 400 },
+    );
+  }
+  if (!html && !text) {
+    return NextResponse.json(
+      { error: "Missing content — paste html or plain text" },
       { status: 400 },
     );
   }
 
-  const [template, list] = await Promise.all([getTemplate(templateId), getList(listId)]);
-  if (!template) return NextResponse.json({ error: "Template not found" }, { status: 404 });
+  const list = await getList(listId);
   if (!list) return NextResponse.json({ error: "List not found" }, { status: 404 });
 
   const when = scheduledAt ? new Date(scheduledAt) : null;
@@ -53,9 +58,9 @@ export async function POST(req: NextRequest) {
     profileId,
     listId,
     listName: list.name,
-    subject: subject?.trim() || template.subject,
-    html: template.html,
-    text: template.text,
+    subject: subject.trim(),
+    html: html || "",
+    text: text || "",
     rateLimit: rateLimit && rateLimit > 0 ? Math.floor(rateLimit) : null,
     batchSize: batchSize && batchSize > 0 ? Math.floor(batchSize) : null,
     replyTo: replyTo?.trim() || null,

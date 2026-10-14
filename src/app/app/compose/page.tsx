@@ -9,7 +9,6 @@ import { htmlToText } from "@/lib/render";
 const TAGS = ["first_name", "last_name", "name", "email", "unsubscribe_url"];
 
 export default function Compose() {
-  const { data: tData } = useFetch<{ templates: any[] }>("/api/templates");
   const { data: pData } = useFetch<{ profiles: any[] }>("/api/profiles");
   const [draft, setDraft] = useState({ subject: "", html: "", text: "" });
   const [tab, setTab] = useState<"edit" | "preview" | "text">("edit");
@@ -118,23 +117,7 @@ export default function Compose() {
 
   return (
     <div>
-      <PageHead title="Compose" sub="send one email to one person — merges fill from their details">
-        <Sel
-          value=""
-          className="w-48"
-          onChange={(e) => {
-            const t = tData?.templates.find((x: any) => x.id === e.target.value);
-            if (t) setDraft({ subject: t.subject, html: t.html, text: t.text });
-          }}
-        >
-          <option value="">load letter…</option>
-          {tData?.templates.map((t: any) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </Sel>
-      </PageHead>
+      <PageHead title="Compose" sub="send one email to one person — paste your html or type plain text" />
 
       <Note msg={msg} />
 
@@ -174,7 +157,7 @@ export default function Compose() {
                 rows={16}
                 spellCheck={false}
                 className="mt-3 w-full border border-zinc-700 bg-black p-3 font-mono text-[13px] text-zinc-300 outline-none focus:border-zinc-500"
-                placeholder="<html>…"
+                placeholder="paste your html here…"
               />
             )}
             {tab === "preview" && (
@@ -190,7 +173,7 @@ export default function Compose() {
                 rows={16}
                 spellCheck={false}
                 className="mt-3 w-full border border-zinc-700 bg-black p-3 font-mono text-[13px] text-zinc-300 outline-none focus:border-zinc-500"
-                placeholder="plain-text fallback…"
+                placeholder="type or paste your plain-text message…"
               />
             )}
           </Card>
