@@ -107,7 +107,7 @@ export default function Profiles() {
             <Btn variant="primary" onClick={save} disabled={busy}>
               {busy ? "saving…" : "save"}
             </Btn>
-            <Btn onClick={() => setEditing(null)}>cancel</Btn>
+            <Btn onClick={() => setEditing(null)}>Cancel</Btn>
           </div>
         </Card>
       )}
@@ -146,7 +146,7 @@ export default function Profiles() {
                 >
                   verify
                 </Btn>
-                <Btn onClick={() => check(p.id)}>spam check</Btn>
+                <Btn onClick={() => check(p.id)}>Spam check</Btn>
                 <Btn
                   onClick={() => {
                     setForm({ ...EMPTY, ...p, password: "" });

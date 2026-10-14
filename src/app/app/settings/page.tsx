@@ -137,7 +137,7 @@ export default function Settings() {
             )
           }
         >
-          [ save ]
+          Save
         </Btn>
       </Card>
 
@@ -210,7 +210,7 @@ export default function Settings() {
             )
           }
         >
-          [ save ]
+          Save
         </Btn>
       </Card>
 

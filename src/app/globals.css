@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Segoe UI", ui-sans-serif, system-ui, -apple-system, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas,
+    "Liberation Mono", monospace;
+}
+
 html,
 body {
   height: 100%;
@@ -7,19 +14,21 @@ body {
 }
 
 body {
-  background: #0c0c0c;
-  color: #cccccc;
-  font-family: Consolas, "Cascadia Mono", "Lucida Console", monospace;
-  -webkit-font-smoothing: none;
-  font-smooth: never;
+  background: #0a0a0b;
+  color: #d4d4d8;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: #3a3d41;
-  color: #ffffff;
+  background: #3f3f46;
+  color: #fafafa;
 }
 
-/* classic cmd block caret */
+/* classic cmd block caret (terminal mode) */
 @keyframes blink {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }
@@ -28,13 +37,66 @@ body {
   animation: blink 1.06s step-end infinite;
 }
 
-/* thin scrollbar like a real console buffer */
+/* thin scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #0c0c0c;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3a3a3a;
+  background: #27272a;
+  border-radius: 5px;
+  border: 2px solid #0a0a0b;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* shared form field — used by raw inputs across pages so they
+   match the primitives in components/web/ui.tsx */
+.field {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #3f3f46;
+  background: #101013;
+  padding: 7px 12px;
+  font-size: 14px;
+  color: #e4e4e7;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.field::placeholder {
+  color: #52525b;
+}
+.field:focus {
+  border-color: #71717a;
+  box-shadow: 0 0 0 1px rgba(113, 113, 122, 0.35);
+}
+.field:disabled {
+  opacity: 0.5;
+}
+
+/* same field styling for code/html editors — keeps mono */
+.editor {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #3f3f46;
+  background: #0e0e10;
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: #d4d4d8;
+  outline: none;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.editor::placeholder {
+  color: #52525b;
+}
+.editor:focus {
+  border-color: #71717a;
+  box-shadow: 0 0 0 1px rgba(113, 113, 122, 0.35);
 }

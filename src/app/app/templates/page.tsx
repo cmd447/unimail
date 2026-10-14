@@ -128,8 +128,8 @@ export default function Letters() {
               />
             </div>
             <div className="mt-4 flex gap-2">
-              <Btn variant="primary" onClick={save}>save</Btn>
-              <Btn onClick={() => setSel(null)}>close</Btn>
+              <Btn variant="primary" onClick={save}>Save</Btn>
+              <Btn onClick={() => setSel(null)}>Close</Btn>
             </div>
           </Card>
         )}

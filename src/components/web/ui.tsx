@@ -12,12 +12,12 @@ export function PageHead({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-zinc-800/70 pb-4">
       <div>
-        <h1 className="text-sm font-bold uppercase tracking-widest text-zinc-300">
+        <h1 className="text-lg font-semibold tracking-tight text-zinc-100">
           {title}
         </h1>
-        {sub && <p className="mt-0.5 text-xs text-zinc-500">{sub}</p>}
+        {sub && <p className="mt-0.5 text-[13px] text-zinc-500">{sub}</p>}
       </div>
       {children && <div className="flex items-center gap-2">{children}</div>}
     </div>
@@ -32,7 +32,9 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={`border-l border-zinc-800 bg-black py-2 pl-3 ${className}`}>
+    <div
+      className={`rounded-lg border border-zinc-800 bg-zinc-900/40 p-4 ${className}`}
+    >
       {children}
     </div>
   );
@@ -50,13 +52,13 @@ export function Btn({
   const [pend, setPend] = React.useState(false);
   const cls =
     variant === "primary"
-      ? "border-zinc-500 bg-zinc-700 text-zinc-300 hover:bg-zinc-600"
+      ? "border-transparent bg-zinc-100 font-medium text-zinc-900 hover:bg-white"
       : variant === "danger"
-        ? "border-red-800 text-red-400 hover:bg-red-950/40"
-        : "border-zinc-600 text-zinc-300 hover:bg-zinc-800";
+        ? "border-red-900/60 text-red-400 hover:bg-red-950/30"
+        : "border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-100";
   return (
     <button
-      className={`border px-2 py-1 text-xs disabled:opacity-40 ${cls}`}
+      className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[13px] leading-5 transition-colors duration-150 focus-visible:outline-1 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 ${cls}`}
       disabled={disabled || pend}
       onClick={async (e) => {
         const r = onClick?.(e) as unknown;
@@ -78,7 +80,9 @@ export function Btn({
 }
 
 const inputCls =
-  "w-full border border-zinc-600 bg-black px-2 py-1.5 text-xs text-zinc-300 placeholder-zinc-600 outline-none focus:border-zinc-300";
+  "w-full rounded-md border border-zinc-700 bg-[#101013] px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 transition-colors duration-150 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500/35";
+
+const labelCls = "mb-1.5 block text-[12px] font-medium text-zinc-400";
 
 export function Inp({
   label,
@@ -86,11 +90,7 @@ export function Inp({
 }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string }) {
   return (
     <label className="block">
-      {label && (
-        <span className="mb-1 block text-[11px] uppercase text-zinc-500">
-          {label}
-        </span>
-      )}
+      {label && <span className={labelCls}>{label}</span>}
       <input className={inputCls} {...rest} />
     </label>
   );
@@ -102,11 +102,7 @@ export function Area({
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string }) {
   return (
     <label className="block">
-      {label && (
-        <span className="mb-1 block text-[11px] uppercase text-zinc-500">
-          {label}
-        </span>
-      )}
+      {label && <span className={labelCls}>{label}</span>}
       <textarea className={inputCls} spellCheck={false} {...rest} />
     </label>
   );
@@ -120,11 +116,7 @@ export function Sel({
 }: React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string }) {
   return (
     <label className="block">
-      {label && (
-        <span className="mb-1 block text-[11px] uppercase text-zinc-500">
-          {label}
-        </span>
-      )}
+      {label && <span className={labelCls}>{label}</span>}
       <select className={`${inputCls} ${className}`} {...rest}>
         {children}
       </select>
@@ -133,11 +125,11 @@ export function Sel({
 }
 
 const badgeColors: Record<string, string> = {
-  green: "border-emerald-700 text-emerald-400",
-  red: "border-red-800 text-red-400",
-  amber: "border-amber-700 text-amber-400",
-  zinc: "border-zinc-600 text-zinc-400",
-  blue: "border-sky-700 text-sky-400",
+  green: "border-emerald-500/25 bg-emerald-500/10 text-emerald-400",
+  red: "border-red-500/25 bg-red-500/10 text-red-400",
+  amber: "border-amber-500/25 bg-amber-500/10 text-amber-400",
+  zinc: "border-zinc-600/40 bg-zinc-500/10 text-zinc-400",
+  blue: "border-sky-500/25 bg-sky-500/10 text-sky-400",
 };
 
 export function Badge({
@@ -149,7 +141,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`ml-1 inline-block border px-1.5 py-px text-[10px] uppercase ${badgeColors[color]}`}
+      className={`inline-block rounded border px-1.5 py-px text-[11px] font-medium ${badgeColors[color]}`}
     >
       {children}
     </span>
@@ -180,20 +172,22 @@ export function Tbl({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-left text-xs">
+      <table className="w-full border-collapse text-left text-[13px]">
         <thead>
           <tr>
             {head.map((h, i) => (
               <th
                 key={i}
-                className="border-b border-zinc-800 px-2 py-1.5 text-[11px] font-bold uppercase text-zinc-500"
+                className="border-b border-zinc-800 px-3 py-2.5 text-[11px] font-medium uppercase tracking-wider text-zinc-500"
               >
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-900">{children}</tbody>
+        <tbody className="divide-y divide-zinc-800/60 [&>tr]:transition-colors [&>tr:hover]:bg-zinc-900/50">
+          {children}
+        </tbody>
       </table>
     </div>
   );
@@ -205,10 +199,7 @@ export function Td({
   ...rest
 }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td
-      className={`border-b border-zinc-900 px-2 py-1.5 ${className}`}
-      {...rest}
-    >
+    <td className={`px-3 py-2.5 ${className}`} {...rest}>
       {children}
     </td>
   );
@@ -217,8 +208,8 @@ export function Td({
 export function Err({ msg }: { msg: string | null }) {
   if (!msg) return null;
   return (
-    <div className="mb-3 border border-red-800 px-2 py-1.5 text-xs text-red-400">
-      ERROR: {msg}
+    <div className="mb-4 rounded-md border border-red-500/25 bg-red-500/10 px-3 py-2 text-[13px] text-red-400">
+      {msg}
     </div>
   );
 }
@@ -227,13 +218,12 @@ export function Note({ msg }: { msg: { text: string; ok: boolean } | null }) {
   if (!msg) return null;
   return (
     <div
-      className={`mb-3 border px-2 py-1.5 text-xs ${
+      className={`mb-4 rounded-md border px-3 py-2 text-[13px] ${
         msg.ok
-          ? "border-emerald-800 text-emerald-400"
-          : "border-red-800 text-red-400"
+          ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400"
+          : "border-red-500/25 bg-red-500/10 text-red-400"
       }`}
     >
-      {msg.ok ? "" : "ERROR: "}
       {msg.text}
     </div>
   );

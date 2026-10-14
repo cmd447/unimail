@@ -155,7 +155,7 @@ export function SpamRadar({
                 <div className={sevCls(i.severity)}>{i.message}</div>
                 {onApply && i.patch && (
                   <Btn onClick={() => onApply(i.patch!(draft))}>
-                    [ fix — {i.auto} ]
+                    Fix — {i.auto}
                   </Btn>
                 )}
                 {onApply && !i.patch && aiOn && (

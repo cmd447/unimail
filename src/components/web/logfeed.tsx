@@ -59,10 +59,10 @@ export function LogDetail({
               {event.at ? new Date(event.at).toLocaleString("en-GB") : ""}
             </span>
           </div>
-          <Btn onClick={onClose}>[ close ]</Btn>
+          <Btn onClick={onClose}>Close</Btn>
         </div>
 
-        <h3 className="mb-1 text-xs uppercase text-zinc-500">delivery receipt</h3>
+        <h3 className="mb-1 text-xs text-zinc-500">Delivery receipt</h3>
         <div className="mb-4 border border-zinc-800 px-2">
           <ROW k="blast" v={event.campaignName} />
           <ROW k="detail" v={event.detail} />
@@ -94,10 +94,10 @@ export function LogDetail({
         {r && (
           <>
             <div className="mb-2 flex items-center gap-2">
-              <h3 className="text-xs uppercase text-zinc-500">the email as sent</h3>
-              <Btn onClick={() => setView("letter")}>{view === "letter" ? "• html •" : "html"}</Btn>
-              <Btn onClick={() => setView("plain")}>{view === "plain" ? "• plain •" : "plain"}</Btn>
-              <Btn onClick={() => setView("raw")}>{view === "raw" ? "• raw •" : "raw"}</Btn>
+              <h3 className="text-xs text-zinc-500">The email as sent</h3>
+              <Btn onClick={() => setView("letter")} variant={view === "letter" ? "primary" : "suppress"}>HTML</Btn>
+              <Btn onClick={() => setView("plain")} variant={view === "plain" ? "primary" : "suppress"}>Plain</Btn>
+              <Btn onClick={() => setView("raw")} variant={view === "raw" ? "primary" : "suppress"}>Raw</Btn>
             </div>
             <p className="mb-2 text-xs text-zinc-400">subject: {r.subject}</p>
             {view === "letter" && (

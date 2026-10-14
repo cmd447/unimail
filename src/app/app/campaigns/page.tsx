@@ -15,7 +15,7 @@ export default function Blast() {
   return (
     <div>
       <PageHead title="Blast" sub="every send — click one for the receipts">
-        <Btn onClick={reload}>refresh</Btn>
+        <Btn onClick={reload}>Refresh</Btn>
         <Link href="/app/campaigns/new">
           <Btn variant="primary">+ new blast</Btn>
         </Link>
@@ -52,10 +52,10 @@ export default function Blast() {
               <td className="px-3 py-2">
                 <div className="flex justify-end gap-1.5">
                   {["draft", "scheduled", "failed"].includes(c.status) && (
-                    <Btn onClick={() => act(c.id, "send")}>send</Btn>
+                    <Btn onClick={() => act(c.id, "send")}>Send</Btn>
                   )}
-                  {c.status === "sending" && <Btn onClick={() => act(c.id, "pause")}>pause</Btn>}
-                  {c.status === "paused" && <Btn onClick={() => act(c.id, "resume")}>resume</Btn>}
+                  {c.status === "sending" && <Btn onClick={() => act(c.id, "pause")}>Pause</Btn>}
+                  {c.status === "paused" && <Btn onClick={() => act(c.id, "resume")}>Resume</Btn>}
                   {!["completed", "cancelled"].includes(c.status) && (
                     <Btn
                       variant="danger"

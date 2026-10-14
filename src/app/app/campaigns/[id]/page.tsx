@@ -138,8 +138,8 @@ export default function CampaignDetail() {
         <Link href="/app/campaigns" className="self-center text-sm text-zinc-500 hover:text-zinc-300">
           ← all sends
         </Link>
-        <Btn onClick={() => { reload(); loadMsgs(); reloadLogs(); reloadQueued(); }}>refresh</Btn>
-        <Btn onClick={() => setPreview(true)}>[ preview ]</Btn>
+        <Btn onClick={() => { reload(); loadMsgs(); reloadLogs(); reloadQueued(); }}>Refresh</Btn>
+        <Btn onClick={() => setPreview(true)}>Preview</Btn>
         {editable && (
           <Btn
             onClick={() => {
@@ -147,18 +147,18 @@ export default function CampaignDetail() {
               setEditing((e) => !e);
             }}
           >
-            [ edit letter ]
+            Edit letter
           </Btn>
         )}
-        <Btn onClick={probe}>[ test placement ]</Btn>
-        <Btn onClick={checkProbes}>[ check placement ]</Btn>
+        <Btn onClick={probe}>Test placement</Btn>
+        <Btn onClick={checkProbes}>Check placement</Btn>
         {["draft", "scheduled", "failed"].includes(c.status) && (
-          <Btn variant="primary" onClick={() => act("send")}>send</Btn>
+          <Btn variant="primary" onClick={() => act("send")}>Send</Btn>
         )}
-        {c.status === "sending" && <Btn onClick={() => act("pause")}>pause</Btn>}
+        {c.status === "sending" && <Btn onClick={() => act("pause")}>Pause</Btn>}
         {c.status === "paused" && (
           <Btn variant="primary" onClick={() => act("resume")}>
-            {c.batchSize ? `[ send next ${Math.min(c.batchSize, k?.total ? k.total - (k.sent + k.failed + k.skipped) : c.batchSize)} ]` : "resume"}
+            {c.batchSize ? `Send next ${Math.min(c.batchSize, k?.total ? k.total - (k.sent + k.failed + k.skipped) : c.batchSize)}` : "Resume"}
           </Btn>
         )}
         {!["completed", "cancelled"].includes(c.status) && (
@@ -167,7 +167,7 @@ export default function CampaignDetail() {
           </Btn>
         )}
         <a href={`/api/campaigns/${id}/export`} download>
-          <Btn>export csv</Btn>
+          <Btn>Export CSV</Btn>
         </a>
       </PageHead>
       <Note msg={msg} />
@@ -235,8 +235,8 @@ export default function CampaignDetail() {
               onChange={(e) => setDraft({ ...draft, text: e.target.value })}
             />
             <div className="flex gap-2">
-              <Btn variant="primary" onClick={saveEdit}>[ save letter ]</Btn>
-              <Btn onClick={() => setEditing(false)}>cancel</Btn>
+              <Btn variant="primary" onClick={saveEdit}>Save letter</Btn>
+              <Btn onClick={() => setEditing(false)}>Cancel</Btn>
             </div>
           </div>
         </Card>
@@ -256,7 +256,7 @@ export default function CampaignDetail() {
                 preview — {sample.email}
                 {queued?.messages?.[0] ? " (real contact)" : " (demo contact)"}
               </div>
-              <Btn onClick={() => setPreview(false)}>close</Btn>
+              <Btn onClick={() => setPreview(false)}>Close</Btn>
             </div>
             <div className="border-b border-zinc-800 px-4 py-2 text-xs text-zinc-500">
               <div><span className="text-zinc-600">subject:</span> <span className="text-zinc-300">{renderMerge(c.subject, merge)}</span></div>
@@ -329,7 +329,7 @@ export default function CampaignDetail() {
       </Tbl>
       {next && (
         <div className="mt-3 text-center">
-          <Btn onClick={() => loadMsgs(next)}>load more</Btn>
+          <Btn onClick={() => loadMsgs(next)}>Load more</Btn>
         </div>
       )}
     </div>

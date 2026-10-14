@@ -136,7 +136,7 @@ export function ImportLeads({
           onKeyDown={(e) => e.key === "Enter" && addOne()}
           className="flex-1"
         />
-        <Btn onClick={addOne} disabled={!oneParsed}>add</Btn>
+        <Btn onClick={addOne} disabled={!oneParsed}>Add</Btn>
       </div>
       {oneParsed && (
         <p className="text-[11px] text-zinc-600 -mt-1">
@@ -201,7 +201,7 @@ export function ImportLeads({
 
       <div className="flex flex-wrap items-center gap-2">
         <Btn variant="primary" disabled={!rows.length} onClick={() => run(rows)}>
-          [ import {rows.length ? `${rows.length}` : ""} ]
+          Import {rows.length ? `${rows.length}` : ""}
         </Btn>
         {aiOn && (
           <Btn disabled={!paste.trim()} onClick={aiSort}>

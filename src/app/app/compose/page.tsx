@@ -133,13 +133,15 @@ export default function Compose() {
               onChange={(e) => setDraft((d) => ({ ...d, subject: e.target.value }))}
               placeholder="subject — {{first_name}} = their name"
             />
-            <div className="mt-3 flex gap-1 border-b border-zinc-800 pb-2">
+            <div className="mt-3 inline-flex rounded-md border border-zinc-700 p-0.5">
               {(["edit", "preview", "text"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`px-2.5 py-1 text-xs capitalize ${
-                    tab === t ? "bg-zinc-800 text-zinc-300" : "text-zinc-500"
+                  className={`rounded px-3 py-1 text-xs font-medium capitalize transition-colors ${
+                    tab === t
+                      ? "bg-zinc-700 text-zinc-100"
+                      : "text-zinc-500 hover:text-zinc-300"
                   }`}
                 >
                   {t === "text" ? "plain" : t === "edit" ? "html" : t}
@@ -159,7 +161,7 @@ export default function Compose() {
                 }
                 rows={16}
                 spellCheck={false}
-                className="mt-3 w-full border border-zinc-700 bg-black p-3 font-mono text-[13px] text-zinc-300 outline-none focus:border-zinc-500"
+                className="editor mt-3"
                 placeholder="paste your html here…"
               />
             )}
@@ -175,7 +177,7 @@ export default function Compose() {
                 onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))}
                 rows={16}
                 spellCheck={false}
-                className="mt-3 w-full border border-zinc-700 bg-black p-3 font-mono text-[13px] text-zinc-300 outline-none focus:border-zinc-500"
+                className="editor mt-3"
                 placeholder="type or paste your plain-text message…"
               />
             )}
@@ -184,8 +186,8 @@ export default function Compose() {
 
         <div className="space-y-4">
           <Card>
-            <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
-              per-contact swaps
+            <h3 className="mb-2 text-[13px] font-medium text-zinc-300">
+              Merge tags
             </h3>
             <div className="flex flex-wrap gap-1.5">
               {TAGS.map((t) => (
@@ -204,8 +206,8 @@ export default function Compose() {
           </Card>
 
           <Card>
-            <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
-              send it
+            <h3 className="mb-2 text-[13px] font-medium text-zinc-300">
+              Send it
             </h3>
             <Sel
               label="via sender"
@@ -227,20 +229,20 @@ export default function Compose() {
                 placeholder="them@their-mail.com"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                className="w-full border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
+                className="field"
               />
               <div className="flex gap-2">
                 <input
                   placeholder="first name"
                   value={rcpt.firstName}
                   onChange={(e) => setRcpt({ ...rcpt, firstName: e.target.value })}
-                  className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
+                  className="field min-w-0 flex-1"
                 />
                 <input
                   placeholder="last name"
                   value={rcpt.lastName}
                   onChange={(e) => setRcpt({ ...rcpt, lastName: e.target.value })}
-                  className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
+                  className="field min-w-0 flex-1"
                 />
               </div>
               <p className="text-[11px] text-zinc-600">
@@ -251,14 +253,14 @@ export default function Compose() {
                   placeholder="from name"
                   value={overrides.fromName}
                   onChange={(e) => setOverrides({ ...overrides, fromName: e.target.value })}
-                  className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
+                  className="field min-w-0 flex-1"
                 />
                 <input
                   placeholder="reply-to"
                   type="email"
                   value={overrides.replyTo}
                   onChange={(e) => setOverrides({ ...overrides, replyTo: e.target.value })}
-                  className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
+                  className="field min-w-0 flex-1"
                 />
               </div>
               <p className="text-[11px] text-zinc-600">
@@ -274,20 +276,20 @@ export default function Compose() {
                 onClick={sendOne}
                 disabled={busy || !to || !active || !draft.subject || (tab === "text" ? !draft.text : !draft.html)}
               >
-                [ send ]
+                Send
               </Btn>
             </div>
           </Card>
 
           <Card>
-            <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
-              spam placement
+            <h3 className="mb-2 text-[13px] font-medium text-zinc-300">
+              Spam placement
             </h3>
             <div className="flex gap-2">
               <Btn onClick={probeFire} disabled={busy || !active || !draft.html}>
-                [ test placement ]
+                Test placement
               </Btn>
-              <Btn onClick={probeCheck} disabled={busy}>[ check ]</Btn>
+              <Btn onClick={probeCheck} disabled={busy}>Check</Btn>
             </div>
             {probes.slice(0, 3).map((p: any) => (
               <div key={p.id} className="mt-2 border-l-2 pl-2 text-[11px]"
@@ -324,14 +326,14 @@ export default function Compose() {
           </Card>
 
           <Card>
-            <h3 className="mb-2 text-xs font-medium uppercase text-zinc-500">
-              save as letter
+            <h3 className="mb-2 text-[13px] font-medium text-zinc-300">
+              Save as letter
             </h3>
             <div className="flex gap-2">
               <input
                 id="tpl-name"
                 placeholder="letter name"
-                className="min-w-0 flex-1 border border-zinc-700 bg-black px-3 py-1.5 text-sm outline-none focus:border-zinc-500"
+                className="field min-w-0 flex-1"
               />
               <Btn
                 onClick={async () => {

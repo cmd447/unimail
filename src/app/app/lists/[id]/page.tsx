@@ -110,7 +110,7 @@ export default function ListDetail() {
       </Tbl>
       {next && (
         <div className="mt-3 text-center">
-          <Btn onClick={() => load(next)}>load more</Btn>
+          <Btn onClick={() => load(next)}>Load more</Btn>
         </div>
       )}
     </div>
