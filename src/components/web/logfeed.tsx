@@ -11,6 +11,8 @@ export const LOG_COLOR: Record<string, string> = {
   bounced: "text-red-400",
   skipped: "text-amber-400",
   probe: "text-fuchsia-400",
+  chain: "text-amber-400",
+  "tick-failed": "text-red-400",
 };
 
 const ROW = ({ k, v }: { k: string; v: unknown }) =>

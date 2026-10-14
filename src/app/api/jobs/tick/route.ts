@@ -45,7 +45,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing campaignId" }, { status: 400 });
   }
 
-  const result = await processBatch(campaignId);
+  let result;
+  try {
+    result = await processBatch(campaignId);
+  } catch (e) {
+    // record the failure so the blast log shows why the chain stopped
+    try {
+      const { db } = await import("@/lib/firebase/admin");
+      const { FieldValue } = await import("firebase-admin/firestore");
+      await db().collection("events").add({
+        campaignId,
+        campaignName: "-",
+        email: "-",
+        status: "tick-failed",
+        detail: e instanceof Error ? e.message : String(e),
+        at: FieldValue.serverTimestamp(),
+      });
+    } catch { /* logging is best-effort */ }
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "tick failed" },
+      { status: 500 },
+    );
+  }
 
   if (result.active && result.remaining > 0) {
     if (queueEnabled()) {

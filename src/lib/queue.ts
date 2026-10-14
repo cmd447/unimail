@@ -25,12 +25,41 @@ export async function dispatchCloud(campaignId: string, delaySeconds = 0) {
 }
 
 export async function dispatchLocal(campaignId: string) {
-  await fetch(tickUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-um-secret": process.env.CRON_SECRET ?? "",
-    },
-    body: JSON.stringify({ campaignId }),
-  });
+  try {
+    const res = await fetch(tickUrl(), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-um-secret": process.env.CRON_SECRET ?? "",
+      },
+      body: JSON.stringify({ campaignId }),
+    });
+    if (!res.ok) {
+      await logChainBreak(campaignId, `tick hop ${res.status}`);
+    }
+  } catch (e) {
+    await logChainBreak(
+      campaignId,
+      `tick hop failed: ${e instanceof Error ? e.message : e}`,
+    );
+  }
+}
+
+/** A dead dispatch chain used to vanish silently — record it so the
+ *  blast log shows WHY sending stalled instead of just sitting queued. */
+async function logChainBreak(campaignId: string, detail: string) {
+  try {
+    const { db } = await import("@/lib/firebase/admin");
+    const { FieldValue } = await import("firebase-admin/firestore");
+    await db().collection("events").add({
+      campaignId,
+      campaignName: "-",
+      email: "-",
+      status: "chain",
+      detail,
+      at: FieldValue.serverTimestamp(),
+    });
+  } catch {
+    /* logging must never break the chain itself */
+  }
 }

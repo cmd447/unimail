@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import { requireApiSession } from "@/lib/api";
+import { dispatchLocal, dispatchCloud, queueEnabled } from "@/lib/queue";
 import {
   createCampaign,
   expandCampaign,
@@ -9,12 +10,24 @@ import {
   setCampaignStatus,
 } from "@/lib/campaigns";
 import { getList } from "@/lib/lists";
-import { dispatchCloud, dispatchLocal, queueEnabled } from "@/lib/queue";
 
 export async function GET() {
   const { error } = await requireApiSession();
   if (error) return error;
-  return NextResponse.json({ campaigns: await listCampaigns() });
+  const campaigns = await listCampaigns();
+  // re-kick sending chains on list load too (same self-heal as detail)
+  const sending = campaigns.filter((c) => c.status === "sending");
+  if (sending.length) {
+    if (queueEnabled())
+      after(async () => {
+        for (const c of sending) await dispatchCloud(c.id).catch(() => {});
+      });
+    else
+      after(async () => {
+        for (const c of sending) await dispatchLocal(c.id);
+      });
+  }
+  return NextResponse.json({ campaigns });
 }
 
 export async function POST(req: NextRequest) {

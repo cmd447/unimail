@@ -19,6 +19,13 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   const { id } = await ctx.params;
   const campaign = await getCampaign(id);
   if (!campaign) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  // Self-heal: a "sending" blast with a dead dispatch chain just sits
+  // queued forever. Any page view re-kicks it — ticks are idempotent
+  // (transactional claims), so extra kicks while a chain is alive are no-ops.
+  if (campaign.status === "sending") {
+    if (queueEnabled()) after(() => dispatchCloud(id).catch(() => {}));
+    else after(() => dispatchLocal(id));
+  }
   return NextResponse.json({ campaign });
 }
 

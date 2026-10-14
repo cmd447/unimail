@@ -50,6 +50,19 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // 1b. Re-kick "sending" campaigns whose dispatch chain died silently.
+  // Ticks are idempotent (transactional claims) — extra kicks are no-ops.
+  const sending = await db()
+    .collection("campaigns")
+    .where("status", "==", "sending")
+    .get();
+  out.kicked = [];
+  for (const doc of sending.docs) {
+    if (queueEnabled()) await dispatchCloud(doc.id).catch(() => {});
+    else after(() => dispatchLocal(doc.id));
+    (out.kicked as string[]).push(doc.data().name ?? doc.id);
+  }
+
   // 2. Bounce polling
   const profiles = await listProfiles();
   for (const p of profiles.filter((x) => x.imapHost)) {
