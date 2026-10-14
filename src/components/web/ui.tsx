@@ -12,14 +12,16 @@ export function PageHead({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-zinc-800/70 pb-4">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight text-zinc-100">
-          {title}
-        </h1>
-        {sub && <p className="mt-0.5 text-[13px] text-zinc-500">{sub}</p>}
+    <div className="mb-6 border-b border-hairline pb-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold uppercase leading-none tracking-[-0.03em] text-phosphor">
+            {title}
+          </h1>
+          {sub && <p className="micro mt-2">{sub}</p>}
+        </div>
+        {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
       </div>
-      {children && <div className="flex items-center gap-2">{children}</div>}
     </div>
   );
 }
@@ -32,9 +34,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div
-      className={`rounded-lg border border-zinc-800 bg-zinc-900/40 p-4 ${className}`}
-    >
+    <div className={`border border-hairline bg-panel p-4 ${className}`}>
       {children}
     </div>
   );
@@ -52,13 +52,13 @@ export function Btn({
   const [pend, setPend] = React.useState(false);
   const cls =
     variant === "primary"
-      ? "border-transparent bg-zinc-100 font-medium text-zinc-900 hover:bg-white"
+      ? "border-hazard bg-hazard text-white hover:bg-[#ff2a2a] hover:border-[#ff2a2a]"
       : variant === "danger"
-        ? "border-red-900/60 text-red-400 hover:bg-red-950/30"
-        : "border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-100";
+        ? "border-hazard/60 text-hazard hover:bg-hazard/10"
+        : "border-hairline-strong text-dim hover:border-dim hover:text-phosphor";
   return (
     <button
-      className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[13px] leading-5 transition-colors duration-150 focus-visible:outline-1 focus-visible:outline-zinc-500 disabled:cursor-not-allowed disabled:opacity-40 ${cls}`}
+      className={`inline-flex items-center gap-1.5 border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.08em] transition-colors duration-150 focus-visible:outline-1 focus-visible:outline-dim disabled:cursor-not-allowed disabled:opacity-40 ${cls}`}
       disabled={disabled || pend}
       onClick={async (e) => {
         const r = onClick?.(e) as unknown;
@@ -80,9 +80,9 @@ export function Btn({
 }
 
 const inputCls =
-  "w-full rounded-md border border-zinc-700 bg-[#101013] px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 transition-colors duration-150 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500/35";
+  "w-full border border-hairline-strong bg-compartment px-3 py-2 font-mono text-[13px] text-phosphor placeholder-muted transition-colors duration-150 focus:border-dim focus:outline-none";
 
-const labelCls = "mb-1.5 block text-[12px] font-medium text-zinc-400";
+const labelCls = "micro mb-1.5 block";
 
 export function Inp({
   label,
@@ -124,39 +124,41 @@ export function Sel({
   );
 }
 
-const badgeColors: Record<string, string> = {
-  green: "border-emerald-500/25 bg-emerald-500/10 text-emerald-400",
-  red: "border-red-500/25 bg-red-500/10 text-red-400",
-  amber: "border-amber-500/25 bg-amber-500/10 text-amber-400",
-  zinc: "border-zinc-600/40 bg-zinc-500/10 text-zinc-400",
-  blue: "border-sky-500/25 bg-sky-500/10 text-sky-400",
+/* status = colored crosshair + mono label. no tinted boxes. */
+const dotColors: Record<string, string> = {
+  green: "text-signal",
+  red: "text-hazard",
+  amber: "text-amber-500",
+  zinc: "text-muted",
+  blue: "text-sky-400",
 };
 
 export function Badge({
   color = "zinc",
   children,
 }: {
-  color?: keyof typeof badgeColors;
+  color?: keyof typeof dotColors;
   children: React.ReactNode;
 }) {
   return (
     <span
-      className={`inline-block rounded border px-1.5 py-px text-[11px] font-medium ${badgeColors[color]}`}
+      className={`inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.08em] ${dotColors[color]}`}
     >
+      <span aria-hidden>+</span>
       {children}
     </span>
   );
 }
 
-export function statusColor(s?: string): keyof typeof badgeColors {
+export function statusColor(s?: string): keyof typeof dotColors {
   switch (s) {
     case "sent": case "completed": case "verified": case "active": case "ok":
       return "green";
-    case "failed": case "bounced": case "cancelled":
+    case "failed": case "bounced": case "cancelled": case "tick-failed":
       return "red";
     case "sending": case "queued": case "resumed":
       return "blue";
-    case "paused": case "scheduled": case "skipped": case "draft":
+    case "paused": case "scheduled": case "skipped": case "draft": case "chain":
       return "amber";
     default:
       return "zinc";
@@ -172,20 +174,20 @@ export function Tbl({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-left text-[13px]">
+      <table className="w-full border-collapse text-left font-mono text-xs">
         <thead>
           <tr>
             {head.map((h, i) => (
               <th
                 key={i}
-                className="border-b border-zinc-800 px-3 py-2.5 text-[11px] font-medium uppercase tracking-wider text-zinc-500"
+                className="micro border-b border-hairline px-3 py-2.5"
               >
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-800/60 [&>tr]:transition-colors [&>tr:hover]:bg-zinc-900/50">
+        <tbody className="divide-y divide-hairline/60 [&>tr]:transition-colors [&>tr:hover]:bg-compartment">
           {children}
         </tbody>
       </table>
@@ -199,7 +201,7 @@ export function Td({
   ...rest
 }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={`px-3 py-2.5 ${className}`} {...rest}>
+    <td className={`px-3 py-2.5 align-top ${className}`} {...rest}>
       {children}
     </td>
   );
@@ -208,7 +210,7 @@ export function Td({
 export function Err({ msg }: { msg: string | null }) {
   if (!msg) return null;
   return (
-    <div className="mb-4 rounded-md border border-red-500/25 bg-red-500/10 px-3 py-2 text-[13px] text-red-400">
+    <div className="mb-4 border border-hazard/60 border-l-2 border-l-hazard bg-hazard/5 px-3 py-2 font-mono text-xs text-hazard">
       {msg}
     </div>
   );
@@ -218,10 +220,10 @@ export function Note({ msg }: { msg: { text: string; ok: boolean } | null }) {
   if (!msg) return null;
   return (
     <div
-      className={`mb-4 rounded-md border px-3 py-2 text-[13px] ${
+      className={`mb-4 border px-3 py-2 font-mono text-xs ${
         msg.ok
-          ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400"
-          : "border-red-500/25 bg-red-500/10 text-red-400"
+          ? "border-signal/40 border-l-2 border-l-signal bg-signal/5 text-signal"
+          : "border-hazard/60 border-l-2 border-l-hazard bg-hazard/5 text-hazard"
       }`}
     >
       {msg.text}

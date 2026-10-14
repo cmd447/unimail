@@ -134,15 +134,15 @@ export default function Compose() {
               onChange={(e) => setDraft((d) => ({ ...d, subject: e.target.value }))}
               placeholder="subject — {{first_name}} = their name"
             />
-            <div className="mt-3 inline-flex rounded-md border border-zinc-700 p-0.5">
+            <div className="mt-3 flex border-b border-hairline">
               {(["edit", "preview", "text"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`rounded px-3 py-1 text-xs font-medium capitalize transition-colors ${
+                  className={`border-b-2 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.1em] transition-colors ${
                     tab === t
-                      ? "bg-zinc-700 text-zinc-100"
-                      : "text-zinc-500 hover:text-zinc-300"
+                      ? "border-hazard text-phosphor"
+                      : "border-transparent text-muted hover:text-dim"
                   }`}
                 >
                   {t === "text" ? "plain" : t === "edit" ? "html" : t}

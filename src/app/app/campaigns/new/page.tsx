@@ -139,8 +139,8 @@ export default function NewCampaign() {
       <div className="grid gap-4 lg:grid-cols-3">
         {/* 01 — sender */}
         <Card>
-          <h3 className="mb-3 border-b border-zinc-800/70 pb-2 text-[13px] font-medium text-zinc-300">
-            01 · Sender
+          <h3 className="micro mb-3 -mx-4 -mt-4 border-b border-hairline bg-compartment px-4 py-2 text-phosphor">
+            [ 01 / sender ]
           </h3>
           <Sel
             label="smtp sender"
@@ -168,18 +168,18 @@ export default function NewCampaign() {
 
         {/* 02 — contacts */}
         <Card>
-          <h3 className="mb-3 border-b border-zinc-800/70 pb-2 text-[13px] font-medium text-zinc-300">
-            02 · Contacts
+          <h3 className="micro mb-3 -mx-4 -mt-4 border-b border-hairline bg-compartment px-4 py-2 text-phosphor">
+            [ 02 / contacts ]
           </h3>
-          <div className="mb-3 inline-flex rounded-md border border-zinc-700 p-0.5">
+          <div className="mb-3 flex border-b border-hairline">
             {(["list", "paste"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setLeadSrc(s)}
-                className={`rounded px-3 py-1 text-xs font-medium capitalize transition-colors ${
+                className={`border-b-2 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.1em] transition-colors ${
                   leadSrc === s
-                    ? "bg-zinc-700 text-zinc-100"
-                    : "text-zinc-500 hover:text-zinc-300"
+                    ? "border-hazard text-phosphor"
+                    : "border-transparent text-muted hover:text-dim"
                 }`}
               >
                 {s}
@@ -221,8 +221,8 @@ export default function NewCampaign() {
 
         {/* 03 — content */}
         <Card>
-          <h3 className="mb-3 border-b border-zinc-800/70 pb-2 text-[13px] font-medium text-zinc-300">
-            03 · Content
+          <h3 className="micro mb-3 -mx-4 -mt-4 border-b border-hairline bg-compartment px-4 py-2 text-phosphor">
+            [ 03 / content ]
           </h3>
           <Inp
             label="subject"
@@ -230,15 +230,15 @@ export default function NewCampaign() {
             onChange={(e) => setForm({ ...form, subject: e.target.value })}
             placeholder="subject line — {{first_name}} works"
           />
-          <div className="mt-3 inline-flex rounded-md border border-zinc-700 p-0.5">
+          <div className="mt-3 flex border-b border-hairline">
             {(["html", "preview", "plain"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setContentTab(t)}
-                className={`rounded px-3 py-1 text-xs font-medium capitalize transition-colors ${
+                className={`border-b-2 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.1em] transition-colors ${
                   contentTab === t
-                    ? "bg-zinc-700 text-zinc-100"
-                    : "text-zinc-500 hover:text-zinc-300"
+                    ? "border-hazard text-phosphor"
+                    : "border-transparent text-muted hover:text-dim"
                 }`}
               >
                 {t}
@@ -312,8 +312,8 @@ export default function NewCampaign() {
 
       {/* 04 — send */}
       <Card className="mt-4">
-        <h3 className="mb-3 border-b border-zinc-800/70 pb-2 text-[13px] font-medium text-zinc-300">
-          04 · Send options
+        <h3 className="micro mb-3 -mx-4 -mt-4 border-b border-hairline bg-compartment px-4 py-2 text-phosphor">
+          [ 04 / send options ]
         </h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Inp

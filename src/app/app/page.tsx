@@ -52,12 +52,12 @@ export default function Overview() {
       <PageHead title="Home" sub="what's set up and what's going out" />
 
       {settings.data?.settings.killSwitch ? (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3">
-          <span className="text-sm font-medium text-red-400">
-            Kill switch on — all sends paused
+        <div className="mb-4 flex items-center justify-between border border-hazard/60 border-l-2 border-l-hazard bg-hazard/5 px-4 py-3">
+          <span className="font-mono text-[12px] uppercase tracking-[0.08em] text-hazard">
+            kill switch on — all sends paused
           </span>
-          <Link href="/app/settings" className="text-xs text-red-300 hover:underline">
-            Fix it →
+          <Link href="/app/settings" className="font-mono text-xs text-phosphor underline">
+            Fix it &gt;&gt;&gt;
           </Link>
         </div>
       ) : null}

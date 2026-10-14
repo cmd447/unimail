@@ -20,8 +20,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (ok === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black font-mono text-xs text-zinc-600">
-        checking session…
+      <div className="flex min-h-screen items-center justify-center bg-substrate font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
+        [ checking session ]
       </div>
     );
   }

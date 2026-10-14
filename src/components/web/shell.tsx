@@ -3,26 +3,16 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import {
-  FileText,
-  House,
-  PenLine,
-  Send,
-  Server,
-  Settings2,
-  Users,
-  Zap,
-} from "lucide-react";
 import { api, useFetch } from "./api";
 
 const NAV = [
-  { label: "Home", href: "/app", icon: House },
-  { label: "SMTP", href: "/app/profiles", icon: Server },
-  { label: "Contacts", href: "/app/lists", icon: Users },
-  { label: "Letters", href: "/app/templates", icon: FileText },
-  { label: "Blast", href: "/app/campaigns", icon: Zap },
-  { label: "Compose", href: "/app/compose", icon: PenLine },
-  { label: "Settings", href: "/app/settings", icon: Settings2 },
+  { label: "Home", href: "/app" },
+  { label: "SMTP", href: "/app/profiles" },
+  { label: "Contacts", href: "/app/lists" },
+  { label: "Letters", href: "/app/templates" },
+  { label: "Blast", href: "/app/campaigns" },
+  { label: "Compose", href: "/app/compose" },
+  { label: "Settings", href: "/app/settings" },
 ] as const;
 
 export default function WebShell({ children }: { children: React.ReactNode }) {
@@ -57,89 +47,92 @@ export default function WebShell({ children }: { children: React.ReactNode }) {
   const isOn = (href: string) =>
     href === "/app" ? path === "/app" : path.startsWith(href);
 
-  const linkCls = (href: string) => {
-    const on = isOn(href);
-    return `flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] transition-colors duration-150 ${
-      on
-        ? "bg-zinc-800 font-medium text-zinc-100"
-        : "text-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-200"
-    }`;
-  };
-
   const senders = data?.profiles?.length ?? 0;
 
   return (
-    <div className="min-h-dvh bg-[#0a0a0b] text-zinc-300">
-      {/* top bar */}
-      <header className="sticky top-0 z-40 flex h-12 items-center gap-3 border-b border-zinc-800/80 bg-[#0a0a0b]/95 px-4 backdrop-blur">
+    <div className="min-h-dvh bg-substrate text-phosphor">
+      {/* compartment header */}
+      <header className="sticky top-0 z-40 flex h-11 items-stretch border-b border-hairline bg-substrate font-mono">
         <Link
           href="/app"
-          className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-100"
+          className="flex items-center gap-2 border-r border-hairline px-4 font-display text-sm font-bold uppercase tracking-[-0.02em] text-phosphor"
         >
-          <Send className="h-4 w-4 text-zinc-400" strokeWidth={2} />
-          UniMail
+          UniMail<span className="text-hazard">®</span>
         </Link>
-        <span className="hidden text-xs text-zinc-600 sm:inline">
-          {senders
-            ? `${senders} sender${senders === 1 ? "" : "s"} ready`
-            : "no senders yet"}
-        </span>
-        <div className="ml-auto flex items-center gap-1">
-          <Link
-            href="/"
-            title="Switch to terminal mode"
-            className="rounded-md px-2.5 py-1.5 text-xs text-zinc-500 transition-colors hover:bg-zinc-800/60 hover:text-zinc-200"
-          >
-            Terminal
-          </Link>
-          <button
-            onClick={logout}
-            className="rounded-md px-2.5 py-1.5 text-xs text-zinc-500 transition-colors hover:bg-zinc-800/60 hover:text-zinc-200"
-          >
-            Log out
-          </button>
+        <div className="micro hidden items-center gap-3 px-4 sm:flex">
+          <span>self-hosted smtp relay</span>
+          <span className="text-hairline-strong">/</span>
+          <span className={senders ? "text-signal" : ""}>
+            {senders ? `${senders} sender${senders === 1 ? "" : "s"} armed` : "no senders"}
+          </span>
         </div>
+        <div className="flex-1" />
+        <Link
+          href="/"
+          title="Switch to terminal mode"
+          className="micro flex items-center border-l border-hairline px-4 transition-colors hover:bg-compartment hover:text-phosphor"
+        >
+          &gt; terminal
+        </Link>
+        <button
+          onClick={logout}
+          className="micro flex items-center border-l border-hairline px-4 transition-colors hover:bg-compartment hover:text-phosphor"
+        >
+          log out
+        </button>
       </header>
 
       <div className="flex">
         {/* sidebar */}
-        <aside className="sticky top-12 hidden h-[calc(100dvh-3rem)] w-56 shrink-0 flex-col border-r border-zinc-800/80 md:flex">
-          <nav className="flex flex-col gap-0.5 p-3">
-            {NAV.map(({ label, href, icon: Icon }) => (
-              <Link key={href} href={href} className={linkCls(href)}>
-                <Icon
-                  className="h-4 w-4 shrink-0"
-                  strokeWidth={isOn(href) ? 2.25 : 1.75}
-                />
-                {label}
-              </Link>
-            ))}
+        <aside className="sticky top-11 hidden h-[calc(100dvh-2.75rem)] w-52 shrink-0 flex-col border-r border-hairline md:flex">
+          <nav className="flex flex-col">
+            {NAV.map(({ label, href }, i) => {
+              const on = isOn(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`group flex items-center gap-3 border-b border-hairline px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors duration-150 ${
+                    on
+                      ? "bg-compartment text-phosphor"
+                      : "text-muted hover:bg-compartment hover:text-dim"
+                  }`}
+                >
+                  <span className={on ? "text-hazard" : "text-hairline-strong group-hover:text-dim"}>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  {label}
+                  {on && <span className="ml-auto text-hazard">+</span>}
+                </Link>
+              );
+            })}
           </nav>
-          <div className="mt-auto border-t border-zinc-800/80 px-5 py-3 font-mono text-[10px] text-zinc-600">
-            unimail · self-hosted
+          <div className="micro mt-auto flex items-center justify-between border-t border-hairline px-4 py-3">
+            <span>rev 2.6</span>
+            <span className="text-hairline-strong">///</span>
+            <span>unit d-01</span>
           </div>
         </aside>
 
         {/* mobile nav row */}
-        <nav className="flex w-full overflow-x-auto border-b border-zinc-800/80 md:hidden">
-          {NAV.map(({ label, href }) => (
+        <nav className="flex w-full overflow-x-auto border-b border-hairline md:hidden">
+          {NAV.map(({ label, href }, i) => (
             <Link
               key={href}
               href={href}
-              className={`whitespace-nowrap px-3 py-2.5 text-[13px] transition-colors ${
-                isOn(href)
-                  ? "border-b-2 border-zinc-200 font-medium text-zinc-100"
-                  : "text-zinc-500 hover:text-zinc-200"
+              className={`flex items-center gap-2 whitespace-nowrap border-r border-hairline px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors ${
+                isOn(href) ? "bg-compartment text-phosphor" : "text-muted"
               }`}
             >
+              <span className={isOn(href) ? "text-hazard" : "text-hairline-strong"}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
               {label}
             </Link>
           ))}
         </nav>
 
-        <main className="min-w-0 flex-1">
-          <div className="mx-auto w-full max-w-7xl p-4 sm:p-6">{children}</div>
-        </main>
+        <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );
