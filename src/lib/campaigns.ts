@@ -52,6 +52,7 @@ export async function createCampaign(input: {
   fromName?: string | null;
   batchSize?: number | null;
   scheduledAt?: Date | null;
+  priority?: "high" | "low" | null;
 }): Promise<Campaign> {
   const ref = db().collection(COL).doc();
   const status: CampaignStatus = input.scheduledAt ? "scheduled" : "draft";

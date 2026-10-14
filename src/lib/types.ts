@@ -100,6 +100,8 @@ export interface Campaign {
   rateLimit?: number | null;
   replyTo?: string | null;
   fromName?: string | null;
+  /** Importance headers — null = no priority headers (like a normal client) */
+  priority?: "high" | "low" | null;
   /** Wave size — send N then auto-pause for a manual "next wave". 0/null = run to end. */
   batchSize?: number | null;
   /** Sends in the current wave — reset when a wave pause fires or resumes */

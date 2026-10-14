@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   const { error } = await requireApiSession();
   if (error) return error;
   const body = await req.json().catch(() => ({}));
-  const { profileId, to, subject, html, text, firstName, lastName, plainOnly, fromName, replyTo } = body;
+  const { profileId, to, subject, html, text, firstName, lastName, plainOnly, fromName, replyTo, priority } = body;
 
   if (!profileId || !to || !subject) {
     return NextResponse.json(
@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
       text: plainText,
       ...(fromName && { fromName }),
       ...(replyTo && { replyTo }),
+      ...((priority === "high" || priority === "low") && { priority }),
     });
     return NextResponse.json({
       ok: true,

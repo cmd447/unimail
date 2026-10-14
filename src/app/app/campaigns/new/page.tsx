@@ -33,7 +33,7 @@ export default function NewCampaign() {
   const [form, setForm] = useState({
     name: "", profileId: "", listId: "",
     subject: "", rateLimit: "", replyTo: "", fromName: "", scheduledAt: "",
-    batchSize: "",
+    batchSize: "", priority: "",
   });
   const [content, setContent] = useState({ html: "", text: "" });
   const [contentTab, setContentTab] = useState<"html" | "preview" | "plain">("html");
@@ -106,6 +106,7 @@ export default function NewCampaign() {
           batchSize: form.batchSize ? parseInt(form.batchSize, 10) : undefined,
           replyTo: form.replyTo || undefined,
           fromName: form.fromName || undefined,
+          priority: form.priority || undefined,
           sendNow,
           scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
         }),
@@ -314,7 +315,7 @@ export default function NewCampaign() {
         <h3 className="mb-3 border-b border-zinc-800/70 pb-2 text-[13px] font-medium text-zinc-300">
           04 · Send options
         </h3>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Inp
             label="send speed /min"
             type="number"
@@ -345,6 +346,15 @@ export default function NewCampaign() {
             onChange={(e) => setForm({ ...form, replyTo: e.target.value })}
             placeholder={sender?.replyTo || "sender's own"}
           />
+          <Sel
+            label="priority"
+            value={form.priority}
+            onChange={(e) => setForm({ ...form, priority: e.target.value })}
+          >
+            <option value="">normal (no headers)</option>
+            <option value="high">high (!)</option>
+            <option value="low">low</option>
+          </Sel>
           <Inp
             label="send later (pick a time)"
             type="datetime-local"

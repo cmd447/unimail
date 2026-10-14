@@ -69,6 +69,7 @@ export async function sendMail(
     headers?: Record<string, string>;
     fromName?: string; // override the profile's display name
     replyTo?: string; // override the profile's reply-to
+    priority?: "high" | "low"; // importance headers; omit = none (like a real client)
   },
 ) {
   const profile = await getProfile(profileId);

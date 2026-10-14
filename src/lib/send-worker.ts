@@ -167,6 +167,7 @@ export async function processBatch(campaignId: string) {
       const info = await transport.sendMail({
         from,
         replyTo,
+        ...(campaign.priority && { priority: campaign.priority }),
         to: settings.seedEmail,
         subject: renderMerge(campaign.subject, pdata),
         html: normalizeHtml(renderMerge(campaign.html, pdata)),
@@ -233,6 +234,7 @@ export async function processBatch(campaignId: string) {
         const info = await transport.sendMail({
           from,
           replyTo,
+          ...(campaign.priority && { priority: campaign.priority }),
           to: email,
           subject,
           html,

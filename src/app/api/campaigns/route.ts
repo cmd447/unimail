@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const { error } = await requireApiSession();
   if (error) return error;
   const body = await req.json().catch(() => ({}));
-  const { name, profileId, listId, sendNow, scheduledAt, subject, html, text, rateLimit, replyTo, fromName, batchSize } = body as {
+  const { name, profileId, listId, sendNow, scheduledAt, subject, html, text, rateLimit, replyTo, fromName, batchSize, priority } = body as {
     name?: string;
     profileId?: string;
     listId?: string;
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     replyTo?: string;
     fromName?: string;
     batchSize?: number;
+    priority?: "high" | "low";
   };
 
   if (!name || !profileId || !listId || !subject) {
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
     batchSize: batchSize && batchSize > 0 ? Math.floor(batchSize) : null,
     replyTo: replyTo?.trim() || null,
     fromName: fromName?.trim() || null,
+    priority: priority === "high" || priority === "low" ? priority : null,
     scheduledAt: when && when.getTime() > Date.now() ? when : null,
   });
 

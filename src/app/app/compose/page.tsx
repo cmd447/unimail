@@ -14,7 +14,7 @@ export default function Compose() {
   const [tab, setTab] = useState<"edit" | "preview" | "text">("edit");
   const [to, setTo] = useState("");
   const [rcpt, setRcpt] = useState({ firstName: "", lastName: "" });
-  const [overrides, setOverrides] = useState({ fromName: "", replyTo: "" });
+  const [overrides, setOverrides] = useState({ fromName: "", replyTo: "", priority: "" });
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [probes, setProbes] = useState<any[]>([]);
@@ -101,6 +101,7 @@ export default function Compose() {
           plainOnly: isPlain,
           ...(overrides.fromName && { fromName: overrides.fromName }),
           ...(overrides.replyTo && { replyTo: overrides.replyTo }),
+          ...(overrides.priority && { priority: overrides.priority }),
           ...(isPlain
             ? { text: draft.text }
             : { html: draft.html }), // text derived server-side from html
@@ -263,6 +264,15 @@ export default function Compose() {
                   className="field min-w-0 flex-1"
                 />
               </div>
+              <select
+                value={overrides.priority}
+                onChange={(e) => setOverrides({ ...overrides, priority: e.target.value })}
+                className="field"
+              >
+                <option value="">priority: normal (no headers)</option>
+                <option value="high">priority: high (!)</option>
+                <option value="low">priority: low</option>
+              </select>
               <p className="text-[11px] text-zinc-600">
                 blank = sender's own name / reply-to
               </p>
