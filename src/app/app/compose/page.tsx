@@ -15,7 +15,6 @@ export default function Compose() {
   const [tab, setTab] = useState<"edit" | "preview" | "text">("edit");
   const [to, setTo] = useState("");
   const [rcpt, setRcpt] = useState({ firstName: "", lastName: "" });
-  const [plainOnly, setPlainOnly] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [probes, setProbes] = useState<any[]>([]);
@@ -85,13 +84,25 @@ export default function Compose() {
   };
 
   const sendOne = async () => {
-    if (!active || !to) return;
+    if (!active || !to || !draft.subject) return;
+    const isPlain = tab === "text";
+    if (isPlain && !draft.text) return;
+    if (!isPlain && !draft.html) return;
     setBusy(true);
     setMsg(null);
     try {
       const d = await api("/api/send-test", {
         method: "POST",
-        body: JSON.stringify({ profileId: active.id, to, ...rcpt, ...draft, plainOnly }),
+        body: JSON.stringify({
+          profileId: active.id,
+          to,
+          ...rcpt,
+          subject: draft.subject,
+          plainOnly: isPlain,
+          ...(isPlain
+            ? { text: draft.text }
+            : { html: draft.html }), // text derived server-side from html
+        }),
       });
       setMsg(
         d.ok
@@ -249,19 +260,15 @@ export default function Compose() {
               <p className="text-[11px] text-zinc-600">
                 names feed {"{{first_name}}"} / {"{{name}}"} — blank = guessed from the email
               </p>
-              <label className="flex items-center gap-2 text-[11px] text-zinc-400">
-                <input
-                  type="checkbox"
-                  checked={plainOnly}
-                  onChange={(e) => setPlainOnly(e.target.checked)}
-                  className="accent-zinc-400"
-                />
-                plain text only — drop the html part entirely
-              </label>
+              <p className="text-[11px] text-zinc-500">
+                {tab === "text"
+                  ? "mode: plain text only — no html part"
+                  : "mode: html + text fallback"}
+              </p>
               <Btn
                 variant="primary"
                 onClick={sendOne}
-                disabled={busy || !to || !active || !draft.subject || !draft.html}
+                disabled={busy || !to || !active || !draft.subject || (tab === "text" ? !draft.text : !draft.html)}
               >
                 [ send ]
               </Btn>

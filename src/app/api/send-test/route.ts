@@ -11,9 +11,18 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const { profileId, to, subject, html, text, firstName, lastName, plainOnly } = body;
 
-  if (!profileId || !to || !subject || !html) {
+  if (!profileId || !to || !subject) {
     return NextResponse.json(
-      { error: "Missing profileId/to/subject/html" },
+      { error: "Missing profileId/to/subject" },
+      { status: 400 },
+    );
+  }
+  if (plainOnly && !text) {
+    return NextResponse.json({ error: "Missing text content" }, { status: 400 });
+  }
+  if (!plainOnly && !html) {
+    return NextResponse.json(
+      { error: "Missing html — switch to plain tab for text-only" },
       { status: 400 },
     );
   }
@@ -25,11 +34,17 @@ export async function POST(req: NextRequest) {
   };
 
   try {
-    const plainText = renderMerge(text ?? "", data) || htmlToText(renderMerge(html, data));
+    // plain mode: send the user's text as-is, no html part
+    // html mode: ALWAYS derive the text fallback from the html —
+    // a mismatched text part ("hi" when html is a full letter) is a spam signal
+    const renderedHtml = html ? renderMerge(html, data) : "";
+    const plainText = plainOnly
+      ? renderMerge(text, data)
+      : htmlToText(renderedHtml);
     const info = await sendMail(profileId, {
       to,
       subject: renderMerge(subject, data),
-      ...(plainOnly ? {} : { html: renderMerge(html, data) }),
+      ...(plainOnly ? {} : { html: renderedHtml }),
       text: plainText,
     });
     return NextResponse.json({
