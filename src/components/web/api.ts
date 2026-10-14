@@ -7,10 +7,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const TTL_MS = 30_000;
 const cache = new Map<string, { t: number; d: unknown }>();
 
-export async function api<T = any>(path: string, opts?: RequestInit): Promise<T> {
+export async function api<T = any>(path: string, opts?: RequestInit, fresh = false): Promise<T> {
   const isGet = !opts?.method || opts.method === "GET";
 
-  if (isGet) {
+  if (isGet && !fresh) {
     const hit = cache.get(path);
     if (hit && Date.now() - hit.t < TTL_MS) return hit.d as T;
   }
@@ -35,29 +35,36 @@ export function useFetch<T = any>(path: string | null, pollMs = 0) {
   const [loading, setLoading] = useState(true);
   const seq = useRef(0);
 
-  const reload = useCallback(async () => {
-    if (!path) return;
-    const n = ++seq.current;
-    try {
-      const d = await api<T>(path);
-      if (seq.current === n) {
-        setData(d);
-        setError(null);
+  const load = useCallback(
+    async (fresh: boolean) => {
+      if (!path) return;
+      const n = ++seq.current;
+      try {
+        const d = await api<T>(path, undefined, fresh);
+        if (seq.current === n) {
+          setData(d);
+          setError(null);
+        }
+      } catch (e) {
+        if (seq.current === n) setError(e instanceof Error ? e.message : "Failed");
+      } finally {
+        if (seq.current === n) setLoading(false);
       }
-    } catch (e) {
-      if (seq.current === n) setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      if (seq.current === n) setLoading(false);
-    }
-  }, [path]);
+    },
+    [path],
+  );
+
+  // manual refresh + polls always bypass the 30s GET cache —
+  // first paint still uses it so warm navigations stay instant
+  const reload = useCallback(() => load(true), [load]);
 
   useEffect(() => {
     setLoading(true);
-    reload();
+    void load(false);
     if (!pollMs) return;
-    const iv = setInterval(reload, pollMs);
+    const iv = setInterval(() => void load(true), pollMs);
     return () => clearInterval(iv);
-  }, [reload, pollMs]);
+  }, [load, pollMs]);
 
   return { data, error, loading, reload };
 }

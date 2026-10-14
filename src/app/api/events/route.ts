@@ -10,12 +10,12 @@ export async function GET(req: NextRequest) {
 
   // equality+orderBy on different fields would need a composite index —
   // fetch the latest events, filter campaignId in code instead.
+  const cid = sp.get("campaignId");
   const snap = await db()
     .collection("events")
     .orderBy("at", "desc")
-    .limit(500)
+    .limit(cid ? 500 : limit)
     .get();
-  const cid = sp.get("campaignId");
   const events = snap.docs
     .map((d) => {
       const e = d.data();

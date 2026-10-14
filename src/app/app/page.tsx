@@ -9,7 +9,7 @@ export default function Overview() {
   const lists = useFetch<{ lists: any[] }>("/api/lists");
   const letters = useFetch<{ templates: any[] }>("/api/templates");
   const blast = useFetch<{ campaigns: any[] }>("/api/campaigns");
-  const events = useFetch<{ events: any[] }>("/api/events?limit=8");
+  const events = useFetch<{ events: any[] }>("/api/events?limit=8", 4000);
   const settings = useFetch<{ settings: any }>("/api/settings");
 
   const senders = profiles.data?.profiles ?? [];

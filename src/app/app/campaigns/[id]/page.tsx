@@ -10,12 +10,17 @@ import { mergeData, renderMerge } from "@/lib/render";
 
 export default function CampaignDetail() {
   const { id } = useParams<{ id: string }>();
-  const { data, reload } = useFetch<{ campaign: any }>(`/api/campaigns/${id}`);
+  const { data, reload } = useFetch<{ campaign: any }>(`/api/campaigns/${id}`, 3000);
+  const c = data?.campaign;
+  // live polling stops on terminal states — nothing left to stream in
+  const live = !c || !["completed", "cancelled"].includes(c.status);
   const { data: logData, reload: reloadLogs } = useFetch<{ events: any[] }>(
     `/api/events?campaignId=${id}&limit=300`,
+    live ? 3000 : 0,
   );
   const { data: queued, reload: reloadQueued } = useFetch<{ messages: any[] }>(
     `/api/campaigns/${id}/messages?status=queued&limit=15`,
+    live ? 3000 : 0,
   );
   const [msgs, setMsgs] = useState<any[]>([]);
   const [next, setNext] = useState<string | null>(null);
@@ -24,7 +29,6 @@ export default function CampaignDetail() {
   const [preview, setPreview] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ subject: "", html: "", text: "" });
-  const c = data?.campaign;
 
   const loadMsgs = useCallback(
     async (after?: string, status = statusFilter) => {

@@ -7,6 +7,7 @@ import { LogFeed } from "@/components/web/logfeed";
 export default function Logs() {
   const { data, reload, loading } = useFetch<{ events: any[] }>(
     "/api/events?limit=500",
+    3000,
   );
 
   return (
